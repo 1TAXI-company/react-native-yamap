@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.google.android.gms.common.util.CollectionUtils;
 import com.yandex.mapkit.ScreenPoint;
 import com.yandex.mapkit.Animation;
 import com.yandex.mapkit.MapKitFactory;
@@ -27,10 +28,12 @@ import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSession;
+import com.yandex.mapkit.directions.driving.JamSegment;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
+import com.yandex.mapkit.geometry.Subpolyline;
 import com.yandex.mapkit.geometry.SubpolylineHelper;
 import com.yandex.mapkit.layers.ObjectEvent;
 import com.yandex.mapkit.map.CameraListener;
@@ -76,10 +79,12 @@ import com.yandex.mapkit.traffic.TrafficListener;
 import com.yandex.mapkit.traffic.TrafficLevel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -99,6 +104,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         put("trolleybus", "#55CfDC");
         put("walk", "#333333");
     }};
+    private static final int NOT_EXIST_INDEX = -1;
     private String userLocationIcon = "";
     private float userLocationIconScale = 1.f;
     private Bitmap userLocationBitmap = null;
@@ -277,6 +283,21 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         setCenter(position, duration, animation);
     }
 
+    private void populateJamsConsumer(WritableMap writableMap, DrivingRoute drivingRoute)
+    {
+        List<JamSegment> jamSegments = drivingRoute.getJamSegments();
+        final WritableArray jams = Arguments.createArray();
+
+        if (!CollectionUtils.isEmpty(jamSegments))
+        {
+            for (int i = 0; i < jamSegments.size(); i++) {
+                jams.pushString(jamSegments.get(i).getJamType().name());
+            }
+        }
+
+        writableMap.putArray("jams", jams);
+    }
+
     public void findRoutes(ArrayList<Point> points, final ArrayList<String> vehicles, final String id) {
         final YamapView self = this;
         if (vehicles.size() == 1 && vehicles.get(0).equals("car")) {
@@ -295,6 +316,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                             sections.pushMap(jsonSection);
                         }
                         jsonRoute.putArray("sections", sections);
+                        populateJamsConsumer(jsonRoute, _route);
                         jsonRoutes.pushMap(jsonRoute);
                     }
                     self.onRoutesFound(id, jsonRoutes, "success");
@@ -606,17 +628,17 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
     public void setFollowUser(Boolean follow) {
         if (userLocationLayer == null) {
-        setShowUserPosition(true);
+            setShowUserPosition(true);
         }
 
         if(follow){
-        userLocationLayer.setAutoZoomEnabled(true);
-        userLocationLayer.setAnchor(
-            new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.5)),
-            new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.83)));
+            userLocationLayer.setAutoZoomEnabled(true);
+            userLocationLayer.setAnchor(
+                    new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.5)),
+                    new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.83)));
         }else{
-        userLocationLayer.setAutoZoomEnabled(false);
-        userLocationLayer.resetAnchor();
+            userLocationLayer.setAutoZoomEnabled(false);
+            userLocationLayer.resetAnchor();
         }
     }
 
@@ -738,6 +760,18 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             jsonPoint.putDouble("lon", point.getLongitude());
             jsonPoints.pushMap(jsonPoint);
         }
+
+        final Subpolyline geometry = section.getGeometry();
+        int beginSegmentIndex = NOT_EXIST_INDEX;
+        int endSegmentIndex = NOT_EXIST_INDEX;
+
+        if (Objects.nonNull(subpolyline) && Objects.nonNull(geometry.getBegin())
+                && Objects.nonNull(subpolyline)) {
+            beginSegmentIndex = geometry.getBegin().getSegmentIndex();
+            endSegmentIndex = geometry.getEnd().getSegmentIndex();
+        }
+        routeMetadata.putInt("beginPointIndex", beginSegmentIndex);
+        routeMetadata.putInt("endPointIndex", endSegmentIndex);
 
         routeMetadata.putArray("points", jsonPoints);
 
