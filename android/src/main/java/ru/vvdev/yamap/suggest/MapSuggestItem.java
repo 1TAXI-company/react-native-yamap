@@ -1,5 +1,7 @@
 package ru.vvdev.yamap.suggest;
 
+import com.yandex.mapkit.geometry.Point;
+
 import javax.annotation.Nullable;
 
 public class MapSuggestItem {
@@ -9,6 +11,8 @@ public class MapSuggestItem {
     private String subtitle;
     @Nullable
     private String uri;
+
+    private Point center;
 
     public MapSuggestItem() {
     }
@@ -46,5 +50,13 @@ public class MapSuggestItem {
 
     public void setUri(@Nullable String uri) {
         this.uri = uri;
+    }
+
+    public Point getCenter() {
+        return center;
+    }
+
+    public void setCenter(Point center) {
+        this.center = center;
     }
 }

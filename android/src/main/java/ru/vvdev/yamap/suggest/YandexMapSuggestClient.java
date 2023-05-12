@@ -50,6 +50,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
             suggestSession = searchManager.createSuggestSession();
         }
 
+
+
         suggestSession.suggest(
                 text,
                 boundingBox,
@@ -67,8 +69,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
                                 suggest.setSubtitle(rawSuggest.getSubtitle().getText());
                             }
                             suggest.setUri(rawSuggest.getUri());
+                            suggest.setCenter(rawSuggest.getCenter());
                             result.add(suggest);
-
                         }
                         onSuccess.invoke(result);
                     }

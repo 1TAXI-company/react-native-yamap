@@ -74,5 +74,5 @@ export declare class ClusteredYamap extends React.Component<ClusteredYaMapProps>
     private processScreenToWorldPointsReceived;
     private resolveImageUri;
     private getProps;
-    render(): JSX.Element;
+    render(): React.JSX.Element;
 }

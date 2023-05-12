@@ -65,5 +65,5 @@ export declare class YaMap extends React.Component<YaMapProps> {
     private processScreenToWorldPointsReceived;
     private resolveImageUri;
     private getProps;
-    render(): JSX.Element;
+    render(): React.JSX.Element;
 }

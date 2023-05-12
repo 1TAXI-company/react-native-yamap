@@ -14,5 +14,5 @@ export interface PolylineProps {
     children?: undefined;
 }
 export declare class Polyline extends React.Component<PolylineProps> {
-    render(): JSX.Element;
+    render(): React.JSX.Element;
 }
