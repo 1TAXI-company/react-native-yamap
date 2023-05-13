@@ -1,7 +1,7 @@
 import { Point } from '../interfaces';
-export declare type ObjectKind = 'house' | 'street' | 'metro' | 'district' | 'locality';
-export declare type Lang = 'ru_RU' | 'uk_UA' | 'be_BY' | 'en_RU' | 'en_US' | 'tr_TR';
-export declare type YandexGeoResponse = any;
+export type ObjectKind = 'house' | 'street' | 'metro' | 'district' | 'locality';
+export type Lang = 'ru_RU' | 'uk_UA' | 'be_BY' | 'en_RU' | 'en_US' | 'tr_TR';
+export type YandexGeoResponse = any;
 export interface Address {
     country_code: string;
     formatted: string;

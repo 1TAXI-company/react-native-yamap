@@ -52,6 +52,7 @@ public class MapSuggestItem {
         this.uri = uri;
     }
 
+    @Nullable
     public Point getCenter() {
         return center;
     }

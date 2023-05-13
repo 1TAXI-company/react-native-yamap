@@ -8,7 +8,7 @@ var Query = /** @class */ (function () {
         var res = '';
         for (var key in this._data) {
             var AMPERSAND = res.length > 0 ? '&' : '';
-            res = "" + res + AMPERSAND + encodeURIComponent(key) + "=" + encodeURIComponent(this._data[key]);
+            res = "".concat(res).concat(AMPERSAND).concat(encodeURIComponent(key), "=").concat(encodeURIComponent(this._data[key]));
         }
         return res;
     };

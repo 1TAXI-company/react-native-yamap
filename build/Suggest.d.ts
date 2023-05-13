@@ -1,14 +1,16 @@
 import { BoundingBox, Point } from './interfaces';
-export declare type YamapSuggest = {
+export type YamapSuggest = {
     title: string;
     subtitle?: string;
     uri?: string;
+    lon?: number;
+    lat?: number;
 };
-export declare type YamapCoords = {
+export type YamapCoords = {
     lon: number;
     lat: number;
 };
-export declare type YamapSuggestWithCoords = YamapSuggest & Partial<YamapCoords>;
+export type YamapSuggestWithCoords = YamapSuggest & Partial<YamapCoords>;
 export declare enum SuggestTypes {
     YMKSuggestTypeUnspecified = 0,
     /**
@@ -24,16 +26,16 @@ export declare enum SuggestTypes {
      */
     YMKSuggestTypeTransit = 4
 }
-export declare type SuggestOptions = {
+export type SuggestOptions = {
     userPosition?: Point;
     boundingBox?: BoundingBox;
     suggestWords?: boolean;
     suggestTypes?: SuggestTypes[];
 };
-declare type SuggestFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggest>>;
-declare type SuggestWithCoordsFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggestWithCoords>>;
-declare type SuggestResetter = () => Promise<void>;
-declare type LatLonGetter = (suggest: YamapSuggest) => YamapCoords | undefined;
+type SuggestFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggest>>;
+type SuggestWithCoordsFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggestWithCoords>>;
+type SuggestResetter = () => Promise<void>;
+type LatLonGetter = (suggest: YamapSuggest) => YamapCoords | undefined;
 declare const Suggest: {
     suggest: SuggestFetcher;
     suggestWithCoords: SuggestWithCoordsFetcher;

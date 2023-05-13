@@ -25,7 +25,7 @@ export declare class Marker extends React.Component<MarkerProps, State> {
     };
     state: {
         recreateKey: boolean;
-        children: React.ReactElement<any, string | ((props: any) => React.ReactElement<any, any> | null) | (new (props: any) => React.Component<any, any, any>)> | undefined;
+        children: React.ReactElement<any, string | React.JSXElementConstructor<any>> | undefined;
     };
     private getCommand;
     static getDerivedStateFromProps(nextProps: MarkerProps, prevState: State): Partial<State>;

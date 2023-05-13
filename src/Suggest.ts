@@ -7,6 +7,8 @@ export type YamapSuggest = {
   title: string;
   subtitle?: string;
   uri?: string;
+  lon?: number;
+  lat?: number;
 };
 export type YamapCoords = {
   lon: number;
