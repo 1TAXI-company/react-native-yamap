@@ -104,6 +104,14 @@
     [routeMetadata setObject:stops forKey:@"stops"];
     [routeMetadata setObject:UIColor.darkGrayColor forKey:@"sectionColor"];
 
+    YMKSubpolyline* geometry = section.geometry;
+
+    if (geometry != nil) {
+        YMKPolylinePosition *begin = geometry.begin;
+        [routeMetadata setObject:@(geometry.begin.segmentIndex) forKey:@"beginPointIndex"];
+        [routeMetadata setObject:@(geometry.end.segmentIndex) forKey:@"endPointIndex"];
+    }
+
     if (section.metadata.weight.distance.value == 0) {
         [routeMetadata setObject:@"waiting" forKey:@"type"];
     } else {
@@ -218,6 +226,36 @@
     return routeMetadata;
 }
 
+- (NSString *)convertJamTypeToString:(YMKDrivingJamType)jamType {
+        NSString *jamTypeString = nil;
+
+        switch (jamType) {
+            case YMKDrivingJamTypeUnknown:
+                jamTypeString = @"UNKNOWN";
+                break;
+            case YMKDrivingJamTypeFree:
+                jamTypeString = @"FREE";
+                break;
+            case YMKDrivingJamTypeHard:
+                jamTypeString = @"HARD";
+                break;
+            case YMKDrivingJamTypeVeryHard:
+                jamTypeString = @"VERY_HARD";
+                break;
+            case YMKDrivingJamTypeLight:
+                jamTypeString = @"LIGHT";
+                break;
+            case YMKDrivingJamTypeBlocked:
+                jamTypeString = @"BLOCKED";
+                break;
+            default:
+                jamTypeString = @"UNKNOWN";
+                break;
+        }
+
+        return jamTypeString;
+}
+
 - (void)findRoutes:(NSArray<YMKRequestPoint *> *)_points vehicles:(NSArray<NSString *> *)vehicles withId:(NSString *)_id {
     __weak RNYMView *weakSelf = self;
 
@@ -250,6 +288,15 @@
                     [sections addObject:jsonSection];
                 }
                 [jsonRoute setValue:sections forKey:@"sections"];
+
+                NSMutableArray *jamsArray = [[NSMutableArray alloc] init];
+                NSArray<YMKDrivingJamSegment *> *jamSegments = [_route jamSegments];
+                for (YMKDrivingJamSegment *jamSegment in jamSegments) {
+                    NSString *jamTypeString = [self convertJamTypeToString:jamSegment.jamType];
+                    [jamsArray addObject:jamTypeString];
+                }
+                [jsonRoute setValue:jamsArray forKey:@"jams"];
+
                 [jsonRoutes addObject:jsonRoute];
             }
 
