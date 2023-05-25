@@ -50,7 +50,7 @@ public class YandexMapSuggestClient implements MapSuggestClient {
             suggestSession = searchManager.createSuggestSession();
         }
 
-
+        options.setSuggestTypes(SuggestType.UNSPECIFIED.value);
 
         suggestSession.suggest(
                 text,
