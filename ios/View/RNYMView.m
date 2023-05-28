@@ -1,5 +1,7 @@
 #import <React/RCTComponent.h>
 #import <React/UIView+React.h>
+#import <React/RCTLog.h>
+#import <RNYamap-Swift.h>
 
 #if TARGET_OS_SIMULATOR
 #import <mach-o/arch.h>
@@ -86,6 +88,7 @@
 
 - (NSDictionary*)convertDrivingRouteSection:(YMKDrivingRoute*)route withSection:(YMKDrivingSection*)section {
     int routeIndex = 0;
+    Vladik *custom = [[Vladik alloc] init];
     YMKDrivingWeight *routeWeight = route.metadata.weight;
     NSMutableDictionary *routeMetadata = [[NSMutableDictionary alloc] init];
     NSMutableDictionary *routeWeightData = [[NSMutableDictionary alloc] init];
@@ -258,6 +261,8 @@
 
 - (void)findRoutes:(NSArray<YMKRequestPoint *> *)_points vehicles:(NSArray<NSString *> *)vehicles withId:(NSString *)_id {
     __weak RNYMView *weakSelf = self;
+      RCTLog(@"This is a log message from Objective-C code");
+
 
     if ([vehicles count] == 1 && [[vehicles objectAtIndex:0] isEqualToString:@"car"]) {
         YMKDrivingDrivingOptions *drivingOptions = [[YMKDrivingDrivingOptions alloc] init];
@@ -274,7 +279,10 @@
 
             NSMutableDictionary* response = [[NSMutableDictionary alloc] init];
             [response setValue:_id forKey:@"id"];
-            [response setValue:@"status" forKey:@"success"];
+            [response setValue:@"failed" forKey:@"status"];
+              RCTLog(@"This is a log from-C code");
+
+
             NSMutableArray* jsonRoutes = [[NSMutableArray alloc] init];
 
             for (int i = 0; i < [routes count]; ++i) {
@@ -310,7 +318,7 @@
     YMKMasstransitSessionRouteHandler _routeHandler = ^(NSArray<YMKMasstransitRoute *> *routes, NSError *error) {
         RNYMView *strongSelf = weakSelf;
         if (error != nil) {
-            [strongSelf onReceiveNativeEvent: @{@"id": _id, @"status": @"error"}];
+            [strongSelf onReceiveNativeEvent: @{@"id": _id, @"status": @"error", @"huyatux": @"failed"}];
             return;
         }
         NSMutableDictionary* response = [[NSMutableDictionary alloc] init];

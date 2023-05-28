@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		15AE118E2A2398E20096F942 /* Vladik.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AE118D2A2398E20096F942 /* Vladik.swift */; };
 		3CA9027E22E1E52D00C144AA /* YamapView.h in Headers */ = {isa = PBXBuildFile; fileRef = 3CA9027D22E1E52D00C144AA /* YamapView.h */; };
 		B3E7B58A1CC2AC0600A0062D /* RNYamap.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNYamap.m */; };
 		D615FE4C222D655B0044E3FA /* RNYamap.h in Headers */ = {isa = PBXBuildFile; fileRef = B3E7B5881CC2AC0600A0062D /* RNYamap.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -18,6 +19,8 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNYamap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNYamap.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		15AE118C2A2398E10096F942 /* RNYamap-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNYamap-Bridging-Header.h"; sourceTree = "<group>"; };
+		15AE118D2A2398E20096F942 /* Vladik.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vladik.swift; sourceTree = "<group>"; };
 		3CA9027D22E1E52D00C144AA /* YamapView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YamapView.h; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* RNYamap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNYamap.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNYamap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNYamap.m; sourceTree = "<group>"; };
@@ -72,6 +75,8 @@
 			children = (
 				D6ABBD592236A9600060C368 /* RNYMView.h */,
 				D6ABBD5A2236A9600060C368 /* RNYMView.m */,
+				15AE118D2A2398E20096F942 /* Vladik.swift */,
+				15AE118C2A2398E10096F942 /* RNYamap-Bridging-Header.h */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -121,6 +126,7 @@
 				TargetAttributes = {
 					58B511DA1A9E6C8500147676 = {
 						CreatedOnToolsVersion = 6.1.1;
+						LastSwiftMigration = 1430;
 					};
 				};
 			};
@@ -157,6 +163,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				15AE118E2A2398E20096F942 /* Vladik.swift in Sources */,
 				D6ABBD5C2236A9600060C368 /* RNYMView.m in Sources */,
 				B3E7B58A1CC2AC0600A0062D /* RNYamap.m in Sources */,
 				D6ABBD14223667300060C368 /* YamapView.m in Sources */,
@@ -251,6 +258,7 @@
 		58B511F01A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -261,12 +269,16 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNYamap;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "View/RNYamap-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		58B511F11A9E6C8500147676 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -277,6 +289,8 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNYamap;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "View/RNYamap-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
