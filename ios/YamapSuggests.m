@@ -15,7 +15,7 @@
     YMKPoint* southWestPoint = [YMKPoint pointWithLatitude:-90.0 longitude:-180.0];
     YMKPoint* northEastPoint = [YMKPoint pointWithLatitude:90.0 longitude:180.0];
     defaultBoundingBox = [YMKBoundingBox boundingBoxWithSouthWest:southWestPoint northEast:northEastPoint];
-    suggestOptions = [YMKSuggestOptions suggestOptionsWithSuggestTypes: YMKSuggestTypeGeo userPosition:nil suggestWords:true];
+    suggestOptions = [YMKSuggestOptions suggestOptionsWithSuggestTypes: YMKSuggestTypeUnspecified userPosition:nil suggestWords:true];
 
     return self;
 }
@@ -59,6 +59,7 @@ NSString* YandexSuggestErrorDomain = @"YandexSuggestErrorDomain";
 	@try {
 		YMKSearchSuggestSession* session = [self getSuggestClient];
 
+
 		dispatch_async(dispatch_get_main_queue(), ^{
 			[session suggestWithText:searchQuery
 												window:boundingBox
@@ -77,6 +78,12 @@ NSString* YandexSuggestErrorDomain = @"YandexSuggestErrorDomain";
 					[suggestToPass setValue:[[suggest title] text] forKey:@"title"];
 					[suggestToPass setValue:[[suggest subtitle] text] forKey:@"subtitle"];
 					[suggestToPass setValue:[suggest uri] forKey:@"uri"];
+
+					YMKPoint *center = [suggest center];
+					if (center != nil) {
+					    [suggestToPass setValue:[[NSNumber numberWithDouble:[center latitude]] stringValue] forKey:@"lat"];
+					    [suggestToPass setValue:[[NSNumber numberWithDouble:[center longitude]] stringValue] forKey:@"lon"];
+					}
 
 					[suggestsToPass addObject:suggestToPass];
 				}
@@ -126,7 +133,7 @@ RCT_EXPORT_METHOD(suggest:(nonnull NSString*) searchQuery resolver:(RCTPromiseRe
 RCT_EXPORT_METHOD(suggestWithOptions:(nonnull NSString*) searchQuery options:(NSDictionary *) options resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject {
 	NSArray *suggestTypes = options[@"suggestTypes"];
 	NSDictionary *boxDictionary = options[@"boundingBox"];
-	YMKSuggestType suggestType = YMKSuggestTypeGeo;
+	YMKSuggestType suggestType = YMKSuggestTypeUnspecified;
 	YMKBoundingBox *boundingBox = self->defaultBoundingBox;
 
 	YMKSuggestOptions *opt = [[YMKSuggestOptions alloc] init];
