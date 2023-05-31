@@ -81,8 +81,10 @@ NSString* YandexSuggestErrorDomain = @"YandexSuggestErrorDomain";
 
 					YMKPoint *center = [suggest center];
 					if (center != nil) {
-					    [suggestToPass setValue:[[NSNumber numberWithDouble:[center latitude]] stringValue] forKey:@"lat"];
-					    [suggestToPass setValue:[[NSNumber numberWithDouble:[center longitude]] stringValue] forKey:@"lon"];
+                        NSNumber *lat = [NSNumber numberWithDouble:[center latitude]];
+                        NSNumber *lon = [NSNumber numberWithDouble:[center longitude]];
+					    [suggestToPass setObject:lat forKey:@"lat"];
+					    [suggestToPass setObject:lon forKey:@"lon"];
 					}
 
 					[suggestsToPass addObject:suggestToPass];

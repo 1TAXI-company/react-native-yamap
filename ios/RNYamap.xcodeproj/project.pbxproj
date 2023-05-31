@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2F014A7D2A26C85100598DF4 /* YamapSuggests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2F014A7C2A26C85100598DF4 /* YamapSuggests.m */; };
 		3CA9027E22E1E52D00C144AA /* YamapView.h in Headers */ = {isa = PBXBuildFile; fileRef = 3CA9027D22E1E52D00C144AA /* YamapView.h */; };
 		B3E7B58A1CC2AC0600A0062D /* RNYamap.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNYamap.m */; };
 		D615FE4C222D655B0044E3FA /* RNYamap.h in Headers */ = {isa = PBXBuildFile; fileRef = B3E7B5881CC2AC0600A0062D /* RNYamap.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -18,6 +19,7 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNYamap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNYamap.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F014A7C2A26C85100598DF4 /* YamapSuggests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YamapSuggests.m; sourceTree = "<group>"; };
 		3CA9027D22E1E52D00C144AA /* YamapView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YamapView.h; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* RNYamap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNYamap.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNYamap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNYamap.m; sourceTree = "<group>"; };
@@ -53,6 +55,7 @@
 				D6F326A823C268CB000C7D4A /* Converter */,
 				D6ABBD13223667300060C368 /* YamapView.m */,
 				3CA9027D22E1E52D00C144AA /* YamapView.h */,
+				2F014A7C2A26C85100598DF4 /* YamapSuggests.m */,
 				B3E7B5881CC2AC0600A0062D /* RNYamap.h */,
 				B3E7B5891CC2AC0600A0062D /* RNYamap.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
@@ -161,6 +164,7 @@
 				B3E7B58A1CC2AC0600A0062D /* RNYamap.m in Sources */,
 				D6ABBD14223667300060C368 /* YamapView.m in Sources */,
 				D6D0D4D3222E7E4900838171 /* RCTConvert+Yamap.m in Sources */,
+				2F014A7D2A26C85100598DF4 /* YamapSuggests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
