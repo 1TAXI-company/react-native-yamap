@@ -23,16 +23,21 @@ import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.directions.DirectionsFactory;
+import com.yandex.mapkit.directions.driving.DirectionSign;
 import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
+import com.yandex.mapkit.directions.driving.DrivingRouteMetadata;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSession;
+import com.yandex.mapkit.directions.driving.Event;
+import com.yandex.mapkit.directions.driving.Flags;
 import com.yandex.mapkit.directions.driving.JamSegment;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
+import com.yandex.mapkit.geometry.PolylinePosition;
 import com.yandex.mapkit.geometry.Subpolyline;
 import com.yandex.mapkit.geometry.SubpolylineHelper;
 import com.yandex.mapkit.layers.ObjectEvent;
@@ -56,6 +61,7 @@ import com.yandex.mapkit.logo.Alignment;
 import com.yandex.mapkit.logo.Padding;
 import com.yandex.mapkit.logo.HorizontalAlignment;
 import com.yandex.mapkit.logo.VerticalAlignment;
+import com.yandex.mapkit.road_events.EventTag;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.mapkit.transport.masstransit.FilterVehicleTypes;
 import com.yandex.mapkit.transport.masstransit.MasstransitRouter;
@@ -79,17 +85,19 @@ import com.yandex.mapkit.traffic.TrafficListener;
 import com.yandex.mapkit.traffic.TrafficLevel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import ru.vvdev.yamap.models.ReactMapObject;
+import ru.vvdev.yamap.populator.DirectionSignsPopulator;
+import ru.vvdev.yamap.populator.LaneSignsPopulator;
+import ru.vvdev.yamap.populator.factory.PopulatorFactory;
+import ru.vvdev.yamap.populator.impl.LaneSignsPopulatorImpl;
 import ru.vvdev.yamap.utils.Callback;
 import ru.vvdev.yamap.utils.ImageLoader;
 import ru.vvdev.yamap.utils.RouteManager;
@@ -109,6 +117,12 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     private float userLocationIconScale = 1.f;
     private Bitmap userLocationBitmap = null;
     private RouteManager routeMng = new RouteManager();
+
+    private LaneSignsPopulator laneSignsPopulator = PopulatorFactory.getInstance()
+            .createLaneSignPopulator();
+
+    private DirectionSignsPopulator directionSignsPopulator = PopulatorFactory.getInstance()
+            .createDirectinoSignPopulator();
     private MasstransitRouter masstransitRouter = TransportFactory.getInstance().createMasstransitRouter();
     private DrivingRouter drivingRouter;
     private ClusterizedPlacemarkCollection clusterCollection;
@@ -122,7 +136,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     static private HashMap<String, ImageProvider> icons = new HashMap<>();
 
     void setImage(final String iconSource, final PlacemarkMapObject mapObject, final IconStyle iconStyle) {
-        if (icons.get(iconSource)==null) {
+        if (icons.get(iconSource) == null) {
             ImageLoader.DownloadImageBitmap(getContext(), iconSource, new Callback<Bitmap>() {
                 @Override
                 public void invoke(Bitmap bitmap) {
@@ -153,6 +167,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         getMap().addCameraListener(this);
         getMap().addInputListener(this);
         getMap().setMapLoadedListener(this);
+
     }
 
     // REF
@@ -283,13 +298,11 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         setCenter(position, duration, animation);
     }
 
-    private void populateJamsConsumer(WritableMap writableMap, DrivingRoute drivingRoute)
-    {
+    private void populateJamsConsumer(WritableMap writableMap, DrivingRoute drivingRoute) {
         List<JamSegment> jamSegments = drivingRoute.getJamSegments();
         final WritableArray jams = Arguments.createArray();
 
-        if (!CollectionUtils.isEmpty(jamSegments))
-        {
+        if (!CollectionUtils.isEmpty(jamSegments)) {
             for (int i = 0; i < jamSegments.size(); i++) {
                 jams.pushString(jamSegments.get(i).getJamType().name());
             }
@@ -300,6 +313,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
     public void findRoutes(ArrayList<Point> points, final ArrayList<String> vehicles, final String id) {
         final YamapView self = this;
+
         if (vehicles.size() == 1 && vehicles.get(0).equals("car")) {
             DrivingSession.DrivingRouteListener listener = new DrivingSession.DrivingRouteListener() {
                 @Override
@@ -311,6 +325,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                         String id = RouteManager.generateId();
                         jsonRoute.putString("id", id);
                         WritableArray sections = Arguments.createArray();
+                        populateRouteData(jsonRoute, _route);
                         for (DrivingSection section : _route.getSections()) {
                             WritableMap jsonSection = convertDrivingRouteSection(_route, section, i);
                             sections.pushMap(jsonSection);
@@ -330,7 +345,9 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             ArrayList<RequestPoint> _points = new ArrayList<>();
             for (int i = 0; i < points.size(); ++i) {
                 Point point = points.get(i);
-                RequestPoint _p = new RequestPoint(point, RequestPointType.WAYPOINT, null);
+                final RequestPointType requestPointType = i == 0 || i == points.size() - 1 ?
+                        RequestPointType.WAYPOINT : RequestPointType.VIAPOINT;
+                RequestPoint _p = new RequestPoint(point, requestPointType, null);
                 _points.add(_p);
             }
             drivingRouter.requestRoutes(_points, new DrivingOptions(), new VehicleOptions(), listener);
@@ -374,6 +391,102 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         }
         TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
         masstransitRouter.requestRoutes(_points, transitOptions, listener);
+    }
+
+    private void populateMetaData(final WritableMap jsonRoute,
+                                  final DrivingRouteMetadata routeMetadata) {
+        final WritableMap metadataMap = Arguments.createMap();
+
+        final com.yandex.mapkit.directions.driving.Weight weight = routeMetadata.getWeight();
+        metadataMap.putString("time", weight.getTime().getText());
+        metadataMap.putString("timeWithTraffic", weight.getTimeWithTraffic().getText());
+        metadataMap.putDouble("distance", weight.getDistance().getValue());
+
+        final Flags flags = routeMetadata.getFlags();
+        if (Objects.nonNull(flags)) {
+            WritableMap flagsMap = Arguments.createMap();
+            flagsMap.putBoolean("blocked", flags.getBlocked());
+            flagsMap.putBoolean("buildOffline", flags.getBuiltOffline());
+            flagsMap.putBoolean("deadJam", flags.getDeadJam());
+            flagsMap.putBoolean("forParking", flags.getForParking());
+            flagsMap.putBoolean("futureBlocked", flags.getFutureBlocked());
+            flagsMap.putBoolean("hasCheckpoints", flags.getHasCheckpoints());
+            flagsMap.putBoolean("hasFerries", flags.getHasFerries());
+            flagsMap.putBoolean("hasFordCrossing", flags.getHasFordCrossing());
+            flagsMap.putBoolean("hasInPoorConditionRoads", flags.getHasInPoorConditionRoads());
+            flagsMap.putBoolean("hasRailwayCrossing", flags.getHasRailwayCrossing());
+            flagsMap.putBoolean("hasRuggedRoads", flags.getHasRuggedRoads());
+            flagsMap.putBoolean("hasTolls", flags.getHasTolls());
+            flagsMap.putBoolean("hasUnpavedRoads", flags.getHasUnpavedRoads());
+            flagsMap.putBoolean("scheduledDeparture", flags.getScheduledDeparture());
+            flagsMap.putBoolean("requiresAccessPass", flags.getRequiresAccessPass());
+            flagsMap.putBoolean("predicted", flags.getPredicted());
+            flagsMap.putBoolean("hasVehicleRestrictions", flags.getHasVehicleRestrictions());
+
+            metadataMap.putMap("flags", flagsMap);
+        }
+
+        jsonRoute.putMap("metadata", metadataMap);
+    }
+
+    private void populateRouteData(final WritableMap jsonRoute, final DrivingRoute drivingRoute) {
+        populateMetaData(jsonRoute, drivingRoute.getMetadata());
+        populateSpeedLimits(jsonRoute, drivingRoute.getSpeedLimits());
+        populateEvents(jsonRoute, drivingRoute.getEvents());
+        jsonRoute.putInt("events size", drivingRoute.getEvents().size());
+        jsonRoute.putInt("direction signs size", drivingRoute.getDirectionSigns().size());
+        laneSignsPopulator.populateLaneSigns(jsonRoute, drivingRoute.getLaneSigns());
+        directionSignsPopulator.populateDirectionSigns(jsonRoute, drivingRoute.getDirectionSigns());
+    }
+
+    private void populateSpeedLimits(WritableMap jsonRoute, final List<Float> speedLimits) {
+        if (!CollectionUtils.isEmpty(speedLimits)) {
+            final WritableArray speedLimitsJson = Arguments.createArray();
+            for (int i = 0; i < speedLimits.size(); i++) {
+                speedLimitsJson.pushDouble(speedLimits.get(i));
+            }
+            jsonRoute.putArray("speedLimits", speedLimitsJson);
+        }
+    }
+
+    private void populateEvents(WritableMap jsonRoute, final List<Event> events) {
+        if (!CollectionUtils.isEmpty(events)) {
+            WritableArray eventsJson = Arguments.createArray();
+            for (Event event : events) {
+                WritableMap eventJson = Arguments.createMap();
+                eventJson.putString("id", event.getEventId());
+
+                final Point location = event.getLocation();
+                if (Objects.nonNull(location)) {
+                    WritableMap pointJson = Arguments.createMap();
+                    pointJson.putDouble("lat", location.getLatitude());
+                    pointJson.putDouble("lon", location.getLongitude());
+                    eventJson.putMap("location", pointJson);
+                }
+
+                final PolylinePosition position = event.getPolylinePosition();
+                if (Objects.nonNull(position)) {
+                    WritableMap positionJson = Arguments.createMap();
+                    positionJson.putDouble("segmentPosition", position.getSegmentPosition());
+                    positionJson.putDouble("segmentIndex", position.getSegmentIndex());
+                    eventJson.putMap("position", positionJson);
+                }
+
+                eventJson.putString("description", event.getDescriptionText());
+
+                final List<EventTag> tags = event.getTags();
+                if (!CollectionUtils.isEmpty(tags)) {
+                    WritableArray tagsJson = Arguments.createArray();
+                    for (EventTag eventTag : tags) {
+                        tagsJson.pushString(eventTag.name());
+                    }
+                    jsonRoute.putArray("tags", tagsJson);
+                }
+
+                eventsJson.pushMap(eventJson);
+            }
+            jsonRoute.putArray("events", eventsJson);
+        }
     }
 
     public void fitAllMarkers() {
@@ -631,12 +744,12 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             setShowUserPosition(true);
         }
 
-        if(follow){
+        if (follow) {
             userLocationLayer.setAutoZoomEnabled(true);
             userLocationLayer.setAnchor(
-                    new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.5)),
-                    new PointF((float)(getWidth() * 0.5), (float)(getHeight() * 0.83)));
-        }else{
+                    new PointF((float) (getWidth() * 0.5), (float) (getHeight() * 0.5)),
+                    new PointF((float) (getWidth() * 0.5), (float) (getHeight() * 0.83)));
+        } else {
             userLocationLayer.setAutoZoomEnabled(false);
             userLocationLayer.resetAnchor();
         }
@@ -724,19 +837,13 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     private WritableMap convertDrivingRouteSection(DrivingRoute route, final DrivingSection section, int routeIndex) {
-        com.yandex.mapkit.directions.driving.Weight routeWeight = route.getMetadata().getWeight();
         WritableMap routeMetadata = Arguments.createMap();
-        WritableMap routeWeightData = Arguments.createMap();
         WritableMap sectionWeightData = Arguments.createMap();
         Map<String, ArrayList<String>> transports = new HashMap<>();
-        routeWeightData.putString("time", routeWeight.getTime().getText());
-        routeWeightData.putString("timeWithTraffic", routeWeight.getTimeWithTraffic().getText());
-        routeWeightData.putDouble("distance", routeWeight.getDistance().getValue());
         sectionWeightData.putString("time", section.getMetadata().getWeight().getTime().getText());
         sectionWeightData.putString("timeWithTraffic", section.getMetadata().getWeight().getTimeWithTraffic().getText());
         sectionWeightData.putDouble("distance", section.getMetadata().getWeight().getDistance().getValue());
         routeMetadata.putMap("sectionInfo", sectionWeightData);
-        routeMetadata.putMap("routeInfo", routeWeightData);
         routeMetadata.putInt("routeIndex", routeIndex);
         final WritableArray stops = new WritableNativeArray();
         routeMetadata.putArray("stops", stops);
@@ -899,17 +1006,17 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     @Override
     public void onMapLoaded(MapLoadStatistics statistics) {
         WritableMap data = Arguments.createMap();
-        data.putInt("renderObjectCount",statistics.getRenderObjectCount());
-        data.putDouble("curZoomModelsLoaded",statistics.getCurZoomModelsLoaded());
-        data.putDouble("curZoomPlacemarksLoaded",statistics.getCurZoomPlacemarksLoaded());
-        data.putDouble("curZoomLabelsLoaded",statistics.getCurZoomLabelsLoaded());
-        data.putDouble("curZoomGeometryLoaded",statistics.getCurZoomGeometryLoaded());
-        data.putDouble("tileMemoryUsage",statistics.getTileMemoryUsage());
-        data.putDouble("delayedGeometryLoaded",statistics.getDelayedGeometryLoaded());
-        data.putDouble("fullyAppeared",statistics.getFullyAppeared());
-        data.putDouble("fullyLoaded",statistics.getFullyLoaded());
+        data.putInt("renderObjectCount", statistics.getRenderObjectCount());
+        data.putDouble("curZoomModelsLoaded", statistics.getCurZoomModelsLoaded());
+        data.putDouble("curZoomPlacemarksLoaded", statistics.getCurZoomPlacemarksLoaded());
+        data.putDouble("curZoomLabelsLoaded", statistics.getCurZoomLabelsLoaded());
+        data.putDouble("curZoomGeometryLoaded", statistics.getCurZoomGeometryLoaded());
+        data.putDouble("tileMemoryUsage", statistics.getTileMemoryUsage());
+        data.putDouble("delayedGeometryLoaded", statistics.getDelayedGeometryLoaded());
+        data.putDouble("fullyAppeared", statistics.getFullyAppeared());
+        data.putDouble("fullyLoaded", statistics.getFullyLoaded());
         ReactContext reactContext = (ReactContext) getContext();
-        reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "onMapLoaded",data);
+        reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "onMapLoaded", data);
     }
 
     //trafficListener implementation
