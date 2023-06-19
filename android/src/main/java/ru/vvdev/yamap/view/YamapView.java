@@ -8,6 +8,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableArray;
@@ -15,6 +16,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.yandex.mapkit.ScreenPoint;
@@ -23,6 +25,7 @@ import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.directions.DirectionsFactory;
+import com.yandex.mapkit.directions.driving.ConditionsListener;
 import com.yandex.mapkit.directions.driving.DirectionSign;
 import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
@@ -134,6 +137,8 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     private TrafficLayer trafficLayer = null;
     private float maxFps = 60;
     static private HashMap<String, ImageProvider> icons = new HashMap<>();
+    private ReactContext reactContext; // Get the current ReactContext instance
+
 
     void setImage(final String iconSource, final PlacemarkMapObject mapObject, final IconStyle iconStyle) {
         if (icons.get(iconSource) == null) {
@@ -162,12 +167,20 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
     public YamapView(Context context) {
         super(context);
+        reactContext = (ReactContext) getContext();
         DirectionsFactory.initialize(context);
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
         getMap().addCameraListener(this);
         getMap().addInputListener(this);
         getMap().setMapLoadedListener(this);
 
+    }
+
+    private void sendLogToJS(String message) {
+        if (reactContext != null) {
+            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit("logEvent", message);
+        }
     }
 
     // REF
@@ -321,6 +334,19 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                     WritableArray jsonRoutes = Arguments.createArray();
                     for (int i = 0; i < routes.size(); ++i) {
                         DrivingRoute _route = routes.get(i);
+                        ConditionsListener conditionsListener = new ConditionsListener() {
+                            @Override
+                            public void onConditionsUpdated() {
+
+                            }
+
+                            @Override
+                            public void onConditionsOutdated() {
+
+                            }
+                        };
+                        _route.addConditionsListener(conditionsListener);
+                        conditionsListener.onConditionsUpdated();
                         WritableMap jsonRoute = Arguments.createMap();
                         String id = RouteManager.generateId();
                         jsonRoute.putString("id", id);
@@ -535,8 +561,19 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             }
         }
 
-        Point southWest = new Point(minLat, minLon);
-        Point northEast = new Point(maxLat, maxLon);
+        double latDelta = maxLat - minLat;
+        double lonDelta = maxLon - minLon;
+
+        Point southWest;
+        Point northEast;
+
+        if (latDelta > lonDelta) {
+            southWest = new Point(minLat - latDelta, minLon);
+            northEast = new Point(maxLat - latDelta / 2.5, maxLon);
+        } else {
+             southWest = new Point(minLat - lonDelta / 2, minLon);
+             northEast = new Point(maxLat - lonDelta / 2, maxLon);
+        }
 
         BoundingBox boundingBox = new BoundingBox(southWest, northEast);
         return boundingBox;
