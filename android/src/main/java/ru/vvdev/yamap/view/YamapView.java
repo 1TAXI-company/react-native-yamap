@@ -469,7 +469,8 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         if (!CollectionUtils.isEmpty(speedLimits)) {
             final WritableArray speedLimitsJson = Arguments.createArray();
             for (int i = 0; i < speedLimits.size(); i++) {
-                speedLimitsJson.pushDouble(speedLimits.get(i));
+                final float value = speedLimits.get(i) != null ? speedLimits.get(i) : -1;
+                speedLimitsJson.pushDouble(value);
             }
             jsonRoute.putArray("speedLimits", speedLimitsJson);
         }
