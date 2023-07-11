@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 import ru.vvdev.yamap.populator.LaneSignsPopulator;
+import ru.vvdev.yamap.utils.PopulatorUtils;
 
 public class LaneSignsPopulatorImpl implements LaneSignsPopulator {
     @Override
@@ -21,23 +22,13 @@ public class LaneSignsPopulatorImpl implements LaneSignsPopulator {
             final WritableArray laneSignsJson = Arguments.createArray();
             for (int i = 0; i < laneSigns.size(); i++) {
                 final WritableMap laneSignJson = Arguments.createMap();
-                populateLaneSignPosition(laneSigns.get(i).getPosition(), laneSignJson);
+                PopulatorUtils.populatePositionJson(laneSignJson, laneSigns.get(i).getPosition());
                 populateLanes(laneSigns.get(i).getLanes(), laneSignJson);
 
                 laneSignsJson.pushMap(laneSignJson);
             }
 
             jsonRoute.putArray("laneSigns", laneSignsJson);
-        }
-    }
-
-    private void populateLaneSignPosition(final PolylinePosition position, final WritableMap laneSignJson) {
-        if (Objects.nonNull(position)) {
-            final WritableMap positionJson = Arguments.createMap();
-            positionJson.putInt("segmentIndex", position.getSegmentIndex());
-            positionJson.putDouble("segmentPosition", position.getSegmentPosition());
-
-            laneSignJson.putMap("position", positionJson);
         }
     }
 

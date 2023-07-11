@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 import ru.vvdev.yamap.populator.DirectionSignsPopulator;
+import ru.vvdev.yamap.utils.PopulatorUtils;
 
 public class DirectionSignsPopulatorImpl implements DirectionSignsPopulator {
     @Override
@@ -29,11 +30,13 @@ public class DirectionSignsPopulatorImpl implements DirectionSignsPopulator {
                 final DirectionSign directionSign = directionSignList.get(i);
                 final WritableMap directionSignJson = Arguments.createMap();
                 populateDirection(directionSign.getDirection(), directionSignJson);
-                populateDirectionSignPosition(directionSign.getPosition(), directionSignJson);
+                PopulatorUtils.populatePositionJson(directionSignJson, directionSign.getPosition());
                 populateItems(directionSign.getItems(), directionSignJson);
+
+                directionSignsJson.pushMap(directionSignJson);
             }
 
-            jsonRoute.putArray("laneSigns", directionSignsJson);
+            jsonRoute.putArray("directionSigns", directionSignsJson);
         }
     }
 
@@ -41,17 +44,6 @@ public class DirectionSignsPopulatorImpl implements DirectionSignsPopulator {
                                    final WritableMap json) {
         if (Objects.nonNull(direction)) {
             json.putString("direction", direction.name());
-        }
-    }
-
-    private void populateDirectionSignPosition(final PolylinePosition position,
-                                               final WritableMap json) {
-        if (Objects.nonNull(position)) {
-            final WritableMap positionJson = Arguments.createMap();
-            positionJson.putInt("segmentIndex", position.getSegmentIndex());
-            positionJson.putDouble("segmentPosition", position.getSegmentPosition());
-
-            json.putMap("position", positionJson);
         }
     }
 

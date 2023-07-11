@@ -26,7 +26,7 @@ import {
   Animation,
   MapLoaded,
   YandexLogoPosition,
-  YandexLogoPadding
+  YandexLogoPadding, RoutePositionInfoEvent, IsOnRouteEvent, ReachedPositionEvent
 } from '../interfaces';
 import { processColorProps } from '../utils';
 
@@ -105,20 +105,55 @@ export class YaMap extends React.Component<YaMapProps> {
     });
   }
 
-  public findRoutes(points: Point[], vehicles: Vehicles[], callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {
-    this._findRoutes(points, vehicles, callback);
+  public findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean,  callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {
+    this._findRoutes(points, vehicles, needNavigationInfo, callback);
   }
 
-  public findMasstransitRoutes(points: Point[], callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
-    this._findRoutes(points, YaMap.ALL_MASSTRANSIT_VEHICLES, callback);
+  public findMasstransitRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
+    this._findRoutes(points, YaMap.ALL_MASSTRANSIT_VEHICLES, needNavigationInfo, callback);
   }
 
-  public findPedestrianRoutes(points: Point[], callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
-    this._findRoutes(points, [], callback);
+  public findPedestrianRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
+    this._findRoutes(points, [], needNavigationInfo, callback);
   }
 
-  public findDrivingRoutes(points: Point[], callback: (event: RoutesFoundEvent<DrivingInfo>) => void) {
-    this._findRoutes(points, ['car'], callback);
+  public findDrivingRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<DrivingInfo>) => void) {
+    this._findRoutes(points, ['car'], needNavigationInfo, callback);
+  }
+
+  // this function will get current position, and will collect some info (details you can find in the interface)
+  // from this point belongs to the route with id that you passed
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
+  public getRoutePositionInfo(routeId: String, callback: (event: RoutePositionInfoEvent) => void) {
+    const cbId = CallbacksManager.addCallback(callback);
+    UIManager.dispatchViewManagerCommand(
+        findNodeHandle(this),
+        this.getCommand('getRoutePositionInfo'),
+        [routeId, cbId]
+    );
+  }
+
+  // this function will get current position on the route with id that you provide and will check is this point belongs
+  // to another route with id that you provide as 2 argument
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
+  public isInRoute(routeId: String, checkableRouteId: String, callback: (event: IsOnRouteEvent) => void) {
+    const cbId = CallbacksManager.addCallback(callback);
+    UIManager.dispatchViewManagerCommand(
+        findNodeHandle(this),
+        this.getCommand('isInRoute'),
+        [routeId, checkableRouteId, cbId]
+    );
+  }
+
+  // this function will return your current position on the route (point index)
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/geometry/PolylinePosition
+  public getReachedPosition(routeId: String, callback: (event: ReachedPositionEvent) => void) {
+    const cbId = CallbacksManager.addCallback(callback);
+    UIManager.dispatchViewManagerCommand(
+        findNodeHandle(this),
+        this.getCommand('getReachedPosition'),
+        [routeId, cbId]
+    );
   }
 
   public fitAllMarkers() {
@@ -197,9 +232,9 @@ export class YaMap extends React.Component<YaMapProps> {
     );
   }
 
-  private _findRoutes(points: Point[], vehicles: Vehicles[], callback: ((event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) | ((event: RoutesFoundEvent<DrivingInfo>) => void) | ((event: RoutesFoundEvent<MasstransitInfo>) => void)) {
+  private _findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean, callback: ((event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) | ((event: RoutesFoundEvent<DrivingInfo>) => void) | ((event: RoutesFoundEvent<MasstransitInfo>) => void)) {
     const cbId = CallbacksManager.addCallback(callback);
-    const args = Platform.OS === 'ios' ? [{ points, vehicles, id: cbId }] : [points, vehicles, cbId];
+    const args = Platform.OS === 'ios' ? [{ points, vehicles, id: cbId, needNavigationInfo }] : [points, vehicles, cbId, needNavigationInfo];
 
     UIManager.dispatchViewManagerCommand(
       findNodeHandle(this),
@@ -215,6 +250,22 @@ export class YaMap extends React.Component<YaMapProps> {
   private processRoute(event: NativeSyntheticEvent<{ id: string } & RoutesFoundEvent<DrivingInfo | MasstransitInfo>>) {
     const { id, ...routes } = event.nativeEvent;
     CallbacksManager.call(id, routes);
+  }
+
+  private processRoutePositionInfo(event: NativeSyntheticEvent<{ id: string } & RoutePositionInfoEvent>) {
+    const { id, ...routePositionInfo} = event.nativeEvent;
+    CallbacksManager.call(id, routePositionInfo);
+  }
+
+  private processIsInRoute(event: NativeSyntheticEvent<{ id: string } & IsOnRouteEvent>) {
+    const { id, ...isInRoute} = event.nativeEvent;
+    CallbacksManager.call(id, isInRoute);
+  }
+
+  private processReachedPosition(event: NativeSyntheticEvent<{ id: string } & ReachedPositionEvent>) {
+    console.log("1");
+    const { id, ...reachedPosition} = event.nativeEvent;
+    CallbacksManager.call(id, reachedPosition);
   }
 
   private processCameraPosition(event: NativeSyntheticEvent<{ id: string } & CameraPosition>) {
@@ -244,7 +295,10 @@ export class YaMap extends React.Component<YaMapProps> {
   private getProps() {
     const props = {
       ...this.props,
+      reachedPosition: this.processReachedPosition,
       onRouteFound: this.processRoute,
+      isInRoute: this.processIsInRoute,
+      routePositionInfo: this.processRoutePositionInfo,
       onCameraPositionReceived: this.processCameraPosition,
       onVisibleRegionReceived: this.processVisibleRegion,
       onWorldToScreenPointsReceived: this.processWorldToScreenPointsReceived,
