@@ -887,6 +887,17 @@
     [self setNoninteractive:!interactive];
 }
 
+- (void)onTrafficChangedWithTrafficLevel:(nullable YMKTrafficLevel *)trafficLevel {
+    //TODO
+}
+
+- (void)onTrafficLoading {
+    //TODO
+}
+
+- (void)onTrafficExpired {
+    //TODO
+}
 
 @synthesize reactTag;
 
