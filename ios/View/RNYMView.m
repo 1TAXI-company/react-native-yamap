@@ -620,8 +620,20 @@
         if ([points[i] latitude] < minLat) minLat = [points[i] latitude];
     }
 
-    YMKPoint *southWest = [YMKPoint pointWithLatitude:minLat longitude:minLon];
-    YMKPoint *northEast = [YMKPoint pointWithLatitude:maxLat longitude:maxLon];
+    double latDelta = maxLat - minLat;
+    double lonDelta = maxLon - minLon;
+
+    YMKPoint *southWest;
+    YMKPoint *northEast;
+
+    if (latDelta > lonDelta) {
+        southWest = [YMKPoint pointWithLatitude:minLat - latDelta longitude:minLon];
+        northEast = [YMKPoint pointWithLatitude:maxLat - latDelta / 2.5 longitude:maxLon];
+    } else {
+        southWest = [YMKPoint pointWithLatitude:minLat - lonDelta / 2 longitude:minLon];
+        northEast = [YMKPoint pointWithLatitude:maxLat - lonDelta / 2 longitude:maxLon];
+    }
+
     YMKBoundingBox *boundingBox = [YMKBoundingBox boundingBoxWithSouthWest:southWest northEast:northEast];
     return boundingBox;
 }
@@ -875,6 +887,17 @@
     [self setNoninteractive:!interactive];
 }
 
+- (void)onTrafficChangedWithTrafficLevel:(nullable YMKTrafficLevel *)trafficLevel {
+    //TODO
+}
+
+- (void)onTrafficLoading {
+    //TODO
+}
+
+- (void)onTrafficExpired {
+    //TODO
+}
 
 @synthesize reactTag;
 
