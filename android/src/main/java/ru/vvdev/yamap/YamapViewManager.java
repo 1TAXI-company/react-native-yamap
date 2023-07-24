@@ -17,6 +17,7 @@ import com.yandex.mapkit.map.CameraPosition;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,6 +64,8 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
             .put("onMapLoaded", MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onMapLoaded")))
             .put("screenToWorldPoints", MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onScreenToWorldPointsReceived")))
             .put("worldToScreenPoints", MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onWorldToScreenPointsReceived")))
+            .put("isInRoute", MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "isInRoute")))
+            .put("routePositionInfo", MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "routePositionInfo")))
             .build();
     }
 
@@ -108,7 +111,7 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
 
                 case "findRoutes":
                     if (args != null) {
-                        findRoutes(view, args.getArray(0), args.getArray(1), args.getString(2));
+                        findRoutes(view, args.getArray(0), args.getArray(1), args.getString(2), args.getBoolean(3));
                     }
                     break;
 
@@ -146,6 +149,22 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
                         view.emitScreenToWorldPoints(args.getArray(0), args.getString(1));
                     }
                     break;
+                case "getRoutePositionInfo":
+                    if (args != null) {
+                        getRoutePositionInfo(view, args.getString(0), args.getString(1));
+                    }
+                    break;
+                case "isInRoute":
+                    if (args != null) {
+                        isInRoute(view, args.getString(0), args.getString(1), args.getString(2));
+                    }
+                    break;
+                case "getReachedPosition":
+                    if (args != null) {
+                        getReachedPosition(view, args.getString(0), args.getString(1));
+                    }
+                    break;
+
 
                 default:
                     throw new IllegalArgumentException(String.format(
@@ -196,7 +215,7 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
         }
     }
 
-    private void findRoutes(View view, ReadableArray jsPoints, ReadableArray jsVehicles, String id) {
+    private void findRoutes(View view, ReadableArray jsPoints, ReadableArray jsVehicles, String id, boolean needNavigationInfo) {
         if (jsPoints != null) {
             ArrayList<Point> points = new ArrayList<>();
 
@@ -215,7 +234,27 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
                 }
             }
 
-            castToYaMapView(view).findRoutes(points, vehicles, id);
+            castToYaMapView(view).findRoutes(points, vehicles, id, needNavigationInfo);
+        }
+    }
+
+    private void getRoutePositionInfo(final View view, final String routeId, final String eventId) {
+        if (Objects.nonNull(routeId)) {
+            castToYaMapView(view).getRoutePositionInfo(routeId, eventId);
+        }
+    }
+
+    private void isInRoute(final View view, final String routeId, final String checkableRouteId,
+                           final String eventId) {
+        if (Objects.nonNull(routeId) && Objects.nonNull(checkableRouteId)) {
+            castToYaMapView(view).isInRoute(routeId, checkableRouteId, eventId);
+        }
+    }
+
+    private void getReachedPosition(final View view, final String routeId,
+                           final String eventId) {
+        if (Objects.nonNull(routeId)) {
+            castToYaMapView(view).getReachedPosition(routeId, eventId);
         }
     }
 

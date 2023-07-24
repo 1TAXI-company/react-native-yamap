@@ -110,20 +110,20 @@ export class ClusteredYamap extends React.Component<ClusteredYaMapProps> {
     });
   }
 
-  public findRoutes(points: Point[], vehicles: Vehicles[], callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {
-    this._findRoutes(points, vehicles, callback);
+  public findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean,  callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {
+    this._findRoutes(points, vehicles, needNavigationInfo, callback);
   }
 
-  public findMasstransitRoutes(points: Point[], callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
-    this._findRoutes(points, YaMap.ALL_MASSTRANSIT_VEHICLES, callback);
+  public findMasstransitRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
+    this._findRoutes(points, YaMap.ALL_MASSTRANSIT_VEHICLES, needNavigationInfo, callback);
   }
 
-  public findPedestrianRoutes(points: Point[], callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
-    this._findRoutes(points, [], callback);
+  public findPedestrianRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<MasstransitInfo>) => void) {
+    this._findRoutes(points, [], needNavigationInfo, callback);
   }
 
-  public findDrivingRoutes(points: Point[], callback: (event: RoutesFoundEvent<DrivingInfo>) => void) {
-    this._findRoutes(points, ['car'], callback);
+  public findDrivingRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<DrivingInfo>) => void) {
+    this._findRoutes(points, ['car'], needNavigationInfo, callback);
   }
 
   public fitAllMarkers() {
@@ -202,9 +202,9 @@ export class ClusteredYamap extends React.Component<ClusteredYaMapProps> {
     );
   }
 
-  private _findRoutes(points: Point[], vehicles: Vehicles[], callback: ((event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) | ((event: RoutesFoundEvent<DrivingInfo>) => void) | ((event: RoutesFoundEvent<MasstransitInfo>) => void)) {
+  private _findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean, callback: ((event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) | ((event: RoutesFoundEvent<DrivingInfo>) => void) | ((event: RoutesFoundEvent<MasstransitInfo>) => void)) {
     const cbId = CallbacksManager.addCallback(callback);
-    const args = Platform.OS === 'ios' ? [{ points, vehicles, id: cbId }] : [points, vehicles, cbId];
+    const args = Platform.OS === 'ios' ? [{ points, vehicles, id: cbId, needNavigationInfo }] : [points, vehicles, cbId, needNavigationInfo];
 
     UIManager.dispatchViewManagerCommand(
       findNodeHandle(this),

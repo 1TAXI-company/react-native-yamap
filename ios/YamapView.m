@@ -217,7 +217,10 @@ RCT_EXPORT_METHOD(findRoutes:(nonnull NSNumber *)reactTag json:(NSDictionary *)j
         }
 
         NSArray<NSString *> *vehicles = [RCTConvert Vehicles:json[@"vehicles"]];
-        [view findRoutes: requestPoints vehicles: vehicles withId:json[@"id"]];
+
+        NSNumber *needNavigationInfoValue = json[@"needNavigationInfo"];
+        BOOL needNavigationInfo = [needNavigationInfoValue boolValue];
+        [view findRoutes: requestPoints vehicles: vehicles withId:json[@"id"] needNavigationInfo:needNavigationInfo];
     }];
 }
 

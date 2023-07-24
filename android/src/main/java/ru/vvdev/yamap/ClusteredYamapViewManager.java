@@ -17,6 +17,7 @@ import com.yandex.mapkit.map.CameraPosition;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -108,7 +109,7 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
 
             case "findRoutes":
                 if (args != null) {
-                    findRoutes(view, args.getArray(0), args.getArray(1), args.getString(2));
+                    findRoutes(view, args.getArray(0), args.getArray(1), args.getString(2), args.getBoolean(3));
                 }
                 break;
 
@@ -144,6 +145,17 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
             case "getWorldPoints":
                 if (args != null) {
                     view.emitScreenToWorldPoints(args.getArray(0), args.getString(1));
+                }
+                break;
+            case "getRoutePositionInfo":
+                if (args != null) {
+                    getRoutePositionInfo(view, args.getString(0), args.getString(1));
+                }
+                break;
+            case "isInRoute":
+                if (args != null) {
+                    isInRoute(view, args.getString(0), args.getString(1),
+                            args.getString(2));
                 }
                 break;
 
@@ -186,6 +198,19 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
         }
     }
 
+    private void getRoutePositionInfo(final View view, final String routeId, final String eventId) {
+        if (Objects.nonNull(routeId)) {
+            castToYaMapView(view).getRoutePositionInfo(routeId, eventId);
+        }
+    }
+
+    private void isInRoute(final View view, final String routeId, final String checkableRouteId,
+                           final String eventId) {
+        if (Objects.nonNull(routeId) && Objects.nonNull(checkableRouteId)) {
+            castToYaMapView(view).isInRoute(routeId, checkableRouteId, eventId);
+        }
+    }
+
     private void fitAllMarkers(View view) {
         castToYaMapView(view).fitAllMarkers();
     }
@@ -205,7 +230,8 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
         }
     }
 
-    private void findRoutes(View view, ReadableArray jsPoints, ReadableArray jsVehicles, String id) {
+    private void findRoutes(View view, ReadableArray jsPoints, ReadableArray jsVehicles,
+                            String id, boolean needNavigationInfo) {
         if (jsPoints != null) {
             ArrayList<Point> points = new ArrayList<>();
             for (int i = 0; i < jsPoints.size(); ++i) {
@@ -220,7 +246,7 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
                     vehicles.add(jsVehicles.getString(i));
                 }
             }
-            castToYaMapView(view).findRoutes(points, vehicles, id);
+            castToYaMapView(view).findRoutes(points, vehicles, id, needNavigationInfo);
         }
     }
 

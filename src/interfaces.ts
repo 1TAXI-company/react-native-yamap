@@ -65,11 +65,56 @@ export interface RouteInfo<T extends (DrivingInfo | MasstransitInfo)> {
   }[];
 }
 
+export interface RoutePositionInfo {
+  id: string;
+  distanceToFinish: number;
+  timeToFinish: number;
+  heading: number;
+  point: Point;
+}
+
+export interface IsOnRoute {
+  onRoute: boolean;
+}
+
+export interface Position {
+  segmentIndex: number;
+  segmentPosition: number
+}
+
+export interface PolylinePosition {
+  position: Position;
+}
+
 export interface RoutesFoundEvent<T extends (DrivingInfo | MasstransitInfo)> {
   nativeEvent: {
     status: 'success' | 'error';
     id: string;
     routes: RouteInfo<T>[];
+  };
+}
+
+export interface RoutePositionInfoEvent {
+  nativeEvent: {
+    status: 'success' | 'noRouteWithSuchId';
+    id: string;
+    routePositionInfo: RoutePositionInfo;
+  };
+}
+
+export interface ReachedPositionEvent {
+  nativeEvent: {
+    status: 'success' | 'noRouteWithSuchId';
+    id: string;
+    reachedPosition: PolylinePosition;
+  };
+}
+
+export interface IsOnRouteEvent {
+  nativeEvent: {
+    status: 'success' | 'noRouteWithSuchId';
+    id: string;
+    isInRoute: IsOnRoute;
   };
 }
 

@@ -256,7 +256,7 @@
         return jamTypeString;
 }
 
-- (void)findRoutes:(NSArray<YMKRequestPoint *> *)_points vehicles:(NSArray<NSString *> *)vehicles withId:(NSString *)_id {
+- (void)findRoutes:(NSArray<YMKRequestPoint *> *)_points vehicles:(NSArray<NSString *> *)vehicles withId:(NSString *)_id needNavigationInfo:(BOOL)needNavigationInfo {
     __weak RNYMView *weakSelf = self;
 
     if ([vehicles count] == 1 && [[vehicles objectAtIndex:0] isEqualToString:@"car"]) {
