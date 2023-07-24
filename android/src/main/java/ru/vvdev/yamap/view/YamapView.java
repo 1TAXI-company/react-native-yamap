@@ -171,7 +171,6 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         getMap().addCameraListener(this);
         getMap().addInputListener(this);
         getMap().setMapLoadedListener(this);
-        sendLogToJS("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
     }
 
     // REF
