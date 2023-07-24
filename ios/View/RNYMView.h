@@ -27,7 +27,7 @@
 - (void)setZoom:(float)zoom withDuration:(float)duration withAnimation:(int)animation;
 - (void)fitAllMarkers;
 - (void)fitMarkers:(NSArray<YMKPoint *> *_Nonnull)points;
-- (void)findRoutes:(NSArray<YMKRequestPoint *> *_Nonnull)points vehicles:(NSArray<NSString *> *_Nonnull)vehicles withId:(NSString *_Nonnull)_id;
+- (void)findRoutes:(NSArray<YMKRequestPoint *> *_Nonnull)points vehicles:(NSArray<NSString *> *_Nonnull)vehicles withId:(NSString *_Nonnull)_id needNavigationInfo:(BOOL)needNavigationInfo;
 - (void)setTrafficVisible:(BOOL)traffic;
 - (void)emitWorldToScreenPoint:(NSArray<YMKPoint *> *_Nonnull)points withId:(NSString*_Nonnull)_id;
 - (void)emitScreenToWorldPoint:(NSArray<YMKScreenPoint *> *_Nonnull)points withId:(NSString*_Nonnull)_id;
