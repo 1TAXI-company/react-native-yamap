@@ -46,6 +46,7 @@
     UIColor *userLocationAccuracyFillColor;
     UIColor *userLocationAccuracyStrokeColor;
     float userLocationAccuracyStrokeWidth;
+    NSMutableDictionary *existingRoutes;
 }
 
 - (instancetype)init {
@@ -81,25 +82,20 @@
     [self.mapWindow.map addCameraListenerWithCameraListener:self];
     [self.mapWindow.map addInputListenerWithInputListener:(id<YMKMapInputListener>) self];
     [self.mapWindow.map setMapLoadedListenerWithMapLoadedListener:self];
+    existingRoutes = [[NSMutableDictionary alloc] init];
     return self;
 }
 
 - (NSDictionary*)convertDrivingRouteSection:(YMKDrivingRoute*)route withSection:(YMKDrivingSection*)section {
     int routeIndex = 0;
-    YMKDrivingWeight *routeWeight = route.metadata.weight;
     NSMutableDictionary *routeMetadata = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary *routeWeightData = [[NSMutableDictionary alloc] init];
     NSMutableDictionary *sectionWeightData = [[NSMutableDictionary alloc] init];
     NSMutableDictionary *transports = [[NSMutableDictionary alloc] init];
     NSMutableArray *stops = [[NSMutableArray alloc] init];
-    [routeWeightData setObject:routeWeight.time.text forKey:@"time"];
-    [routeWeightData setObject:routeWeight.timeWithTraffic.text forKey:@"timeWithTraffic"];
-    [routeWeightData setObject:@(routeWeight.distance.value) forKey:@"distance"];
     [sectionWeightData setObject:section.metadata.weight.time.text forKey:@"time"];
     [sectionWeightData setObject:section.metadata.weight.timeWithTraffic.text forKey:@"timeWithTraffic"];
     [sectionWeightData setObject:@(section.metadata.weight.distance.value) forKey:@"distance"];
     [routeMetadata setObject:sectionWeightData forKey:@"sectionInfo"];
-    [routeMetadata setObject:routeWeightData forKey:@"routeInfo"];
     [routeMetadata setObject:@(routeIndex) forKey:@"routeIndex"];
     [routeMetadata setObject:stops forKey:@"stops"];
     [routeMetadata setObject:UIColor.darkGrayColor forKey:@"sectionColor"];
@@ -227,33 +223,33 @@
 }
 
 - (NSString *)convertJamTypeToString:(YMKDrivingJamType)jamType {
-        NSString *jamTypeString = nil;
+    NSString *jamTypeString = nil;
 
-        switch (jamType) {
-            case YMKDrivingJamTypeUnknown:
-                jamTypeString = @"UNKNOWN";
-                break;
-            case YMKDrivingJamTypeFree:
-                jamTypeString = @"FREE";
-                break;
-            case YMKDrivingJamTypeHard:
-                jamTypeString = @"HARD";
-                break;
-            case YMKDrivingJamTypeVeryHard:
-                jamTypeString = @"VERY_HARD";
-                break;
-            case YMKDrivingJamTypeLight:
-                jamTypeString = @"LIGHT";
-                break;
-            case YMKDrivingJamTypeBlocked:
-                jamTypeString = @"BLOCKED";
-                break;
-            default:
-                jamTypeString = @"UNKNOWN";
-                break;
-        }
+    switch (jamType) {
+        case YMKDrivingJamTypeUnknown:
+            jamTypeString = @"UNKNOWN";
+            break;
+        case YMKDrivingJamTypeFree:
+            jamTypeString = @"FREE";
+            break;
+        case YMKDrivingJamTypeHard:
+            jamTypeString = @"HARD";
+            break;
+        case YMKDrivingJamTypeVeryHard:
+            jamTypeString = @"VERY_HARD";
+            break;
+        case YMKDrivingJamTypeLight:
+            jamTypeString = @"LIGHT";
+            break;
+        case YMKDrivingJamTypeBlocked:
+            jamTypeString = @"BLOCKED";
+            break;
+        default:
+            jamTypeString = @"UNKNOWN";
+            break;
+    }
 
-        return jamTypeString;
+    return jamTypeString;
 }
 
 - (void)findRoutes:(NSArray<YMKRequestPoint *> *)_points vehicles:(NSArray<NSString *> *)vehicles withId:(NSString *)_id needNavigationInfo:(BOOL)needNavigationInfo {
@@ -272,6 +268,8 @@
                 return;
             }
 
+            [strongSelf->existingRoutes removeAllObjects];
+
             NSMutableDictionary* response = [[NSMutableDictionary alloc] init];
             [response setValue:_id forKey:@"id"];
             [response setValue:@"status" forKey:@"success"];
@@ -279,23 +277,24 @@
 
             for (int i = 0; i < [routes count]; ++i) {
                 YMKDrivingRoute *_route = [routes objectAtIndex:i];
-                NSMutableDictionary *jsonRoute = [[NSMutableDictionary alloc] init];
-                [jsonRoute setValue:[NSString stringWithFormat:@"%d", i] forKey:@"id"];
-                NSMutableArray* sections = [[NSMutableArray alloc] init];
-                NSArray<YMKDrivingSection *> *_sections = [_route sections];
-                for (int j = 0; j < [_sections count]; ++j) {
-                    NSDictionary *jsonSection = [self convertDrivingRouteSection:_route withSection: [_sections objectAtIndex:j]];
-                    [sections addObject:jsonSection];
-                }
-                [jsonRoute setValue:sections forKey:@"sections"];
 
-                NSMutableArray *jamsArray = [[NSMutableArray alloc] init];
-                NSArray<YMKDrivingJamSegment *> *jamSegments = [_route jamSegments];
-                for (YMKDrivingJamSegment *jamSegment in jamSegments) {
-                    NSString *jamTypeString = [self convertJamTypeToString:jamSegment.jamType];
-                    [jamsArray addObject:jamTypeString];
+                NSString *routeId = _route.routeId != nil && _route.routeId.length > 0 ? _route.routeId : [NSString stringWithFormat:@"%d", i];
+                [strongSelf->existingRoutes setObject:_route forKey:routeId];
+                NSMutableDictionary *jsonRoute = [[NSMutableDictionary alloc] init];
+                [jsonRoute setValue:routeId forKey:@"id"];
+
+                [self populateMandatoryInfo:_route json: jsonRoute];
+
+                if (needNavigationInfo) {
+                    NSMutableArray* sections = [[NSMutableArray alloc] init];
+                    NSArray<YMKDrivingSection *> *_sections = [_route sections];
+                    for (int j = 0; j < [_sections count]; ++j) {
+                        NSDictionary *jsonSection = [self convertDrivingRouteSection:_route withSection: [_sections objectAtIndex:j]];
+                        [sections addObject:jsonSection];
+                    }
+                    [jsonRoute setValue:sections forKey:@"sections"];
+                    [self populateDrivingInfo:_route json: jsonRoute];
                 }
-                [jsonRoute setValue:jamsArray forKey:@"jams"];
 
                 [jsonRoutes addObject:jsonRoute];
             }
@@ -342,6 +341,74 @@
 
     YMKTransitOptions *_transitOptions = [YMKTransitOptions transitOptionsWithAvoid:YMKFilterVehicleTypesNone timeOptions:[[YMKTimeOptions alloc] init]];
     masstransitSession = [masstransitRouter requestRoutesWithPoints:_points transitOptions:_transitOptions routeHandler:_routeHandler];
+}
+
+- (void)populateMandatoryInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSMutableArray *jamsArray = [[NSMutableArray alloc] init];
+    NSArray<YMKDrivingJamSegment *> *jamSegments = [route jamSegments];
+    for (YMKDrivingJamSegment *jamSegment in jamSegments) {
+        NSString *jamTypeString = [self convertJamTypeToString:jamSegment.jamType];
+        [jamsArray addObject:jamTypeString];
+    }
+    [jsonRoute setValue:jamsArray forKey:@"jams"];
+
+    NSMutableArray *geometryArray = [[NSMutableArray alloc] init];
+    NSArray<YMKPoint *> *geometries = [[route geometry] points];
+    for (YMKPoint *point in geometries) {
+        [geometryArray addObject:[self createMapFromPolyline:point]];
+    }
+    [jsonRoute setObject:geometryArray forKey:@"points"];
+
+    [self populateRouteMetadataInfo:route json:jsonRoute];
+
+
+}
+
+- (void)populateRouteMetadataInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    YMKDrivingWeight *routeWeight = route.metadata.weight;
+    NSMutableDictionary *metadata = [[NSMutableDictionary alloc] init];
+    [metadata setObject:routeWeight.time.text forKey:@"time"];
+    [metadata setObject:routeWeight.timeWithTraffic.text forKey:@"timeWithTraffic"];
+    [metadata setObject:@(routeWeight.distance.value) forKey:@"distance"];
+
+    YMKDrivingFlags *flags = route.metadata.flags;
+    if (flags != nil) {
+        NSMutableDictionary *flagsMap = [[NSMutableDictionary alloc] init];
+        [flagsMap setValue:[NSNumber numberWithBool:flags.hasTolls] forKey:@"time"];
+
+        [flagsMap setObject:[NSNumber numberWithBool:flags.blocked] forKey:@"blocked"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.builtOffline] forKey:@"buildOffline"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.deadJam] forKey:@"deadJam"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.forParking] forKey:@"forParking"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.futureBlocked] forKey:@"futureBlocked"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasCheckpoints] forKey:@"hasCheckpoints"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasFerries] forKey:@"hasFerries"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasFordCrossing] forKey:@"hasFordCrossing"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasInPoorConditionRoads] forKey:@"hasInPoorConditionRoads"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasRailwayCrossing] forKey:@"hasRailwayCrossing"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasRuggedRoads] forKey:@"hasRuggedRoads"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasTolls] forKey:@"hasTolls"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasUnpavedRoads] forKey:@"hasUnpavedRoads"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.scheduledDeparture] forKey:@"scheduledDeparture"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.requiresAccessPass] forKey:@"requiresAccessPass"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.predicted] forKey:@"predicted"];
+        [flagsMap setObject:[NSNumber numberWithBool:flags.hasVehicleRestrictions] forKey:@"hasVehicleRestrictions"];
+
+        [metadata setObject:flagsMap forKey:@"flags"];
+    }
+
+    [jsonRoute setObject:metadata forKey:@"metadata"];
+}
+
+- (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+
+}
+
+- (NSDictionary*)createMapFromPolyline:(YMKPoint*)point {
+    NSMutableDictionary *pointJson = [[NSMutableDictionary alloc] init];
+    [pointJson setValue:[NSNumber numberWithDouble:point.latitude] forKey:@"lat"];
+    [pointJson setValue:[NSNumber numberWithDouble:point.longitude] forKey:@"lon"];
+    return pointJson;
 }
 
 - (UIImage*)resolveUIImage:(NSString*)uri {
