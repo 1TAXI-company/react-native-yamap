@@ -13,6 +13,25 @@ export interface ScreenPoint {
   y: number;
 }
 
+export interface Arrow {
+  length: number;
+  segmentIndex: number;
+  segmentPosition: number
+  arrowOutlineColor: number;
+  arrowOutlineWidth: number;
+  arrowColor: number;
+}
+
+export interface GradientInfo {
+  length?: number;
+  strokeInfos: StrokeInfo[];
+}
+
+export interface StrokeInfo {
+  color: number;
+  weight: number;
+}
+
 export interface MapLoaded {
   renderObjectCount: number;
   curZoomModelsLoaded: number;

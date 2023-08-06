@@ -17,8 +17,11 @@ import com.yandex.mapkit.map.MapObjectTapListener;
 import com.yandex.mapkit.map.PolylineMapObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import ru.vvdev.yamap.models.ReactMapObject;
+import ru.vvdev.yamap.view.dto.ArrowDto;
+import ru.vvdev.yamap.view.dto.GradientDto;
 
 public class YamapPolyline extends ViewGroup implements MapObjectTapListener, ReactMapObject {
     public Polyline polyline;
@@ -32,6 +35,10 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
     private int gapLength = 0;
     private float dashOffset = 0;
     private int outlineWidth = 0;
+
+    private ArrowDto arrow;
+
+    private GradientDto gradientDto;
 
     public YamapPolyline(Context context) {
         super(context);
@@ -89,17 +96,38 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
         updatePolyline();
     }
 
+    public void setArrow(ArrowDto arrow) {
+        this.arrow = arrow;
+        updatePolyline();
+    }
+
+    public void setGradient(GradientDto gradientDto) {
+        this.gradientDto = gradientDto;
+        updatePolyline();
+    }
+
     private void updatePolyline() {
         if (mapObject != null) {
             mapObject.setGeometry(polyline);
             mapObject.setStrokeWidth(strokeWidth);
-            mapObject.setStrokeColor(strokeColor);
+            //mapObject.setStrokeColor(strokeColor);
             mapObject.setZIndex(zIndex);
             mapObject.setDashLength(dashLength);
             mapObject.setGapLength(gapLength);
             mapObject.setDashOffset(dashOffset);
             mapObject.setOutlineColor(outlineColor);
             mapObject.setOutlineWidth(outlineWidth);
+            if (Objects.nonNull(arrow)) {
+                mapObject.addArrow(arrow.getPosition(), arrow.getLength(), arrow.getArrowColor());
+                if (Objects.nonNull(mapObject.arrows())) {
+                    mapObject.arrows().get(0).setOutlineWidth(arrow.getArrowOutlineWidth());
+                    mapObject.arrows().get(0).setOutlineColor(arrow.getArrowOutlineColor());
+                }
+            }
+            if (Objects.nonNull(gradientDto)) {
+                mapObject.setStrokeColors(gradientDto.getColors(), gradientDto.getWeights());
+                mapObject.setGradientLength(gradientDto.getLength());
+            }
         }
     }
 
