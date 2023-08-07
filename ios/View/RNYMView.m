@@ -355,13 +355,11 @@
     NSMutableArray *geometryArray = [[NSMutableArray alloc] init];
     NSArray<YMKPoint *> *geometries = [[route geometry] points];
     for (YMKPoint *point in geometries) {
-        [geometryArray addObject:[self createMapFromPolyline:point]];
+        [geometryArray addObject:[self createMapFromPoint:point]];
     }
     [jsonRoute setObject:geometryArray forKey:@"points"];
 
     [self populateRouteMetadataInfo:route json:jsonRoute];
-
-
 }
 
 - (void)populateRouteMetadataInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
@@ -401,14 +399,82 @@
 }
 
 - (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
-
+    [self populateSpeedLimits:route json:jsonRoute];
+    [self populateSpeedBumps:route json:jsonRoute];
+    [self populateCheckpoints:route json:jsonRoute];
+    [self populateRuggedRoads:route json:jsonRoute];
 }
 
-- (NSDictionary*)createMapFromPolyline:(YMKPoint*)point {
+- (void)populateSpeedLimits:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<NSNumber *> *speedLimits = [route speedLimits];
+    if (speedLimits != nil) {
+        NSMutableArray *speedLimitArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [speedLimits count]; i++) {
+            [speedLimitArray addObject:[speedLimits objectAtIndex:i] != nil ? [speedLimits objectAtIndex:i] : [NSNumber numberWithInteger:-1]];
+        }
+        [jsonRoute setObject:speedLimitArray forKey:@"speedLimits"];
+    }
+}
+
+- (void)populateSpeedBumps:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingSpeedBump *> *speedBumps = [route speedBumps];
+    if (speedBumps != nil) {
+        NSMutableArray *speedBumpsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [speedBumps count]; i++) {
+            YMKPolylinePosition *position = [[speedBumps objectAtIndex:i] position];
+            [speedBumpsArray addObject:[self createMapFromPolyline:position]];
+        }
+        [jsonRoute setObject:speedBumpsArray forKey:@"speedBumps"];
+    }
+}
+
+- (void)populateCheckpoints:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingCheckpoint *> *checkpoints = [route checkpoints];
+    if (checkpoints != nil) {
+        NSMutableArray *checkpointsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [checkpoints count]; i++) {
+            YMKPolylinePosition *position = [[checkpoints objectAtIndex:i] position];
+            [checkpointsArray addObject:[self createMapFromPolyline:position]];
+        }
+        [jsonRoute setObject:checkpointsArray forKey:@"speedBumps"];
+    }
+}
+
+- (void)populateRuggedRoads:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingRuggedRoad *> *ruggedRoads = [route ruggedRoads];
+    if (ruggedRoads != nil) {
+        NSMutableArray *ruggedRoadsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [ruggedRoads count]; i++) {
+            YMKDrivingRuggedRoad *ruggedRoad = [ruggedRoads objectAtIndex:i];
+
+            YMKSubpolyline *position = [ruggedRoad position];
+            NSMutableDictionary *positionJson = [[NSMutableDictionary alloc] init];
+            [positionJson setValue:[self createMapFromPolyline:[position begin]] forKey:@"begin"];
+            [positionJson setValue:[self createMapFromPolyline:[position end]] forKey:@"end"];
+
+            NSMutableDictionary *ruggedRoadJson = [[NSMutableDictionary alloc] init];
+            [ruggedRoadJson setValue:positionJson forKey:@"position"];
+            [ruggedRoadJson setValue:[NSNumber numberWithBool:[ruggedRoad inPoorCondition]] forKey:@"inPoorCondition"];
+            [ruggedRoadJson setValue:[NSNumber numberWithBool:[ruggedRoad unpaved]] forKey:@"unpaved"];
+
+            [ruggedRoadsArray addObject:ruggedRoadJson];
+        }
+        [jsonRoute setObject:ruggedRoadsArray forKey:@"ruggedRoads"];
+    }
+}
+
+- (NSDictionary*)createMapFromPoint:(YMKPoint*)point {
     NSMutableDictionary *pointJson = [[NSMutableDictionary alloc] init];
     [pointJson setValue:[NSNumber numberWithDouble:point.latitude] forKey:@"lat"];
     [pointJson setValue:[NSNumber numberWithDouble:point.longitude] forKey:@"lon"];
     return pointJson;
+}
+
+- (NSDictionary*)createMapFromPolyline:(YMKPolylinePosition*)polyline {
+    NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
+    [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentIndex] forKey:@"segmentIndex"];
+    [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentPosition] forKey:@"segmentPosition"];
+    return polylineJson;
 }
 
 - (UIImage*)resolveUIImage:(NSString*)uri {
@@ -969,3 +1035,4 @@
 @synthesize reactTag;
 
 @end
+
