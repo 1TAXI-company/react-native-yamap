@@ -399,10 +399,11 @@
 }
 
 - (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
-    [self populateSpeedLimits:route json:jsonRoute];
+    //[self populateSpeedLimits:route json:jsonRoute];
     [self populateSpeedBumps:route json:jsonRoute];
     [self populateCheckpoints:route json:jsonRoute];
     [self populateRuggedRoads:route json:jsonRoute];
+    [self populateTollRoads:route json:jsonRoute];
 }
 
 - (void)populateSpeedLimits:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
@@ -460,6 +461,27 @@
             [ruggedRoadsArray addObject:ruggedRoadJson];
         }
         [jsonRoute setObject:ruggedRoadsArray forKey:@"ruggedRoads"];
+    }
+}
+
+- (void)populateTollRoads:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingTollRoad *> *tollRoads = [route tollRoads];
+    if (tollRoads != nil) {
+        NSMutableArray *tollRoadArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [tollRoads count]; i++) {
+            YMKDrivingTollRoad *tollRoad = [tollRoads objectAtIndex:i];
+
+            YMKSubpolyline *position = [tollRoad position];
+            NSMutableDictionary *positionJson = [[NSMutableDictionary alloc] init];
+            [positionJson setValue:[self createMapFromPolyline:[position begin]] forKey:@"begin"];
+            [positionJson setValue:[self createMapFromPolyline:[position end]] forKey:@"end"];
+
+            NSMutableDictionary *tollRoadJson = [[NSMutableDictionary alloc] init];
+            [tollRoadJson setValue:positionJson forKey:@"position"];
+
+            [tollRoadArray addObject:tollRoadJson];
+        }
+        [jsonRoute setObject:tollRoadArray forKey:@"tollRoads"];
     }
 }
 
