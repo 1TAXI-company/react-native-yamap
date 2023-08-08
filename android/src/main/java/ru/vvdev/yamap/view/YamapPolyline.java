@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
@@ -17,6 +18,7 @@ import com.yandex.mapkit.map.MapObjectTapListener;
 import com.yandex.mapkit.map.PolylineMapObject;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import ru.vvdev.yamap.models.ReactMapObject;
@@ -40,6 +42,8 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
 
     private GradientDto gradientDto;
 
+    private float turnRadius = 10;
+
     public YamapPolyline(Context context) {
         super(context);
         polyline = new Polyline(new ArrayList<Point>());
@@ -55,6 +59,8 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
         polyline = new Polyline(_points);
         updatePolyline();
     }
+
+
 
     public void setZIndex(int _zIndex) {
         zIndex = _zIndex;
@@ -106,17 +112,23 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
         updatePolyline();
     }
 
+    public void setTurnRadius(float turnRadius) {
+        this.turnRadius = turnRadius;
+        updatePolyline();
+    }
+
     private void updatePolyline() {
         if (mapObject != null) {
             mapObject.setGeometry(polyline);
             mapObject.setStrokeWidth(strokeWidth);
-            //mapObject.setStrokeColor(strokeColor);
+            mapObject.setStrokeColor(strokeColor);
             mapObject.setZIndex(zIndex);
             mapObject.setDashLength(dashLength);
             mapObject.setGapLength(gapLength);
             mapObject.setDashOffset(dashOffset);
             mapObject.setOutlineColor(outlineColor);
             mapObject.setOutlineWidth(outlineWidth);
+            mapObject.setTurnRadius(turnRadius);
             if (Objects.nonNull(arrow)) {
                 mapObject.addArrow(arrow.getPosition(), arrow.getLength(), arrow.getArrowColor());
                 if (Objects.nonNull(mapObject.arrows())) {

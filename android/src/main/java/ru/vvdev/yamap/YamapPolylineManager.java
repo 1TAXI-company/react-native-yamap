@@ -113,6 +113,11 @@ public class YamapPolylineManager extends ViewGroupManager<YamapPolyline> {
         castToPolylineView(view).setOutlineColor(color);
     }
 
+    @ReactProp(name = "turnRadius")
+    public void setTurnRadious(View view, float color) {
+        castToPolylineView(view).setTurnRadius(color);
+    }
+
     @ReactProp(name = "arrow")
     public void setArrow(View view, ReadableMap readableMap) {
         if (Objects.nonNull(readableMap)) {
