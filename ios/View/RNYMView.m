@@ -357,7 +357,7 @@
     for (YMKPoint *point in geometries) {
         [geometryArray addObject:[self createMapFromPoint:point]];
     }
-    [jsonRoute setObject:geometryArray forKey:@"points"];
+    [jsonRoute setObject:geometryArray forKey:@"geometry"];
 
     [self populateRouteMetadataInfo:route json:jsonRoute];
 }
@@ -399,11 +399,18 @@
 }
 
 - (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
-    //[self populateSpeedLimits:route json:jsonRoute];
+    [self populateSpeedLimits:route json:jsonRoute];
     [self populateSpeedBumps:route json:jsonRoute];
     [self populateCheckpoints:route json:jsonRoute];
     [self populateRuggedRoads:route json:jsonRoute];
     [self populateTollRoads:route json:jsonRoute];
+    [self populateFerries:route json:jsonRoute];
+    [self populateTrafficLights:route json:jsonRoute];
+    [self populateStandingSegments:route json:jsonRoute];
+    [self populateAnnotationLanguage:route json:jsonRoute];
+    [self populateRequestPoints:route json:jsonRoute];
+    [self populateWayPoints:route json:jsonRoute];
+    [self populateLaneSigns:route json:jsonRoute];
 }
 
 - (void)populateSpeedLimits:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
@@ -411,11 +418,29 @@
     if (speedLimits != nil) {
         NSMutableArray *speedLimitArray = [[NSMutableArray alloc] init];
         for (int i = 0; i < [speedLimits count]; i++) {
-            [speedLimitArray addObject:[speedLimits objectAtIndex:i] != nil ? [speedLimits objectAtIndex:i] : [NSNumber numberWithInteger:-1]];
+            NSNumber *speedLimitNumber = [speedLimits objectAtIndex:i];
+            if (speedLimitNumber != nil && ![speedLimitNumber isEqual:[NSNull null]]) {
+                [speedLimitArray addObject:speedLimitNumber];
+            } else {
+                [speedLimitArray addObject:@(-1)];
+            }
+
         }
         [jsonRoute setObject:speedLimitArray forKey:@"speedLimits"];
     }
 }
+
+- (void)populateWayPoints:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKPolylinePosition *> *wayPoints = [route wayPoints];
+    if (wayPoints != nil) {
+        NSMutableArray *wayPointsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [wayPoints count]; i++) {
+            [wayPointsArray addObject:[self createMapFromPolyline:[wayPoints objectAtIndex:i]]];
+        }
+        [jsonRoute setObject:wayPointsArray forKey:@"wayPoints"];
+    }
+}
+
 
 - (void)populateSpeedBumps:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
     NSArray<YMKDrivingSpeedBump *> *speedBumps = [route speedBumps];
@@ -426,6 +451,98 @@
             [speedBumpsArray addObject:[self createMapFromPolyline:position]];
         }
         [jsonRoute setObject:speedBumpsArray forKey:@"speedBumps"];
+    }
+}
+
+- (void)populateRequestPoints:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKRequestPoint *> *requestPoints = [route requestPoints];
+    if (requestPoints != nil) {
+        NSMutableArray *requestPointsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [requestPoints count]; i++) {
+            YMKRequestPoint *requestPoint = [requestPoints objectAtIndex:i];
+            NSMutableDictionary *requestPointJson = [[NSMutableDictionary alloc] init];
+            [requestPointJson setValue:[self createMapFromPoint:[requestPoint point]] forKey:@"point"];
+
+            NSString *type = nil;
+
+            switch ([requestPoint type]) {
+                case YMKRequestPointTypeWaypoint:
+                    type = @"WAYPOINT";
+                    break;
+                case YMKRequestPointTypeViapoint:
+                    type = @"VIAPOINT";
+                    break;
+                default:
+                    type = @"WAYPOINT";
+                    break;
+            }
+
+            [requestPointJson setValue:type forKey:@"type"];
+
+            if ([requestPoint pointContext] != nil) {
+                [requestPointJson setValue:[requestPoint pointContext] forKey:@"pointContext"];
+            }
+
+
+            [requestPointsArray addObject:requestPointJson];
+        }
+        [jsonRoute setObject:requestPointsArray forKey:@"requestPoints"];
+    }
+}
+
+- (void)populateTrafficLights:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingTrafficLight *> *trafficLights = [route trafficLights];
+    if (trafficLights != nil) {
+        NSMutableArray *trafficLightsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [trafficLights count]; i++) {
+            YMKPolylinePosition *position = [[trafficLights objectAtIndex:i] position];
+            [trafficLightsArray addObject:[self createMapFromPolyline:position]];
+        }
+        [jsonRoute setObject:trafficLightsArray forKey:@"trafficLights"];
+    }
+}
+
+- (void)populateAnnotationLanguage:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    if ([route annotationLanguage] != nil) {
+        [jsonRoute setObject:[route annotationLanguage] forKey:@"annotationLanguage"];
+    }
+}
+
+- (void)populateFerries:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingFerry *> *ferries = [route ferries];
+    if (ferries != nil) {
+        NSMutableArray *ferriesArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [ferries count]; i++) {
+            YMKSubpolyline *position = [[ferries objectAtIndex:i] position];
+            NSMutableDictionary *positionJson = [[NSMutableDictionary alloc] init];
+            [positionJson setValue:[self createMapFromPolyline:[position begin]] forKey:@"begin"];
+            [positionJson setValue:[self createMapFromPolyline:[position end]] forKey:@"end"];
+
+            NSMutableDictionary *ferryJson = [[NSMutableDictionary alloc] init];
+            [ferryJson setValue:positionJson forKey:@"position"];
+
+            [ferriesArray addObject:ferryJson];
+        }
+        [jsonRoute setObject:ferriesArray forKey:@"ferries"];
+    }
+}
+
+- (void)populateStandingSegments:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingStandingSegment *> *standingSegments = [route standingSegments];
+    if (standingSegments != nil) {
+        NSMutableArray *standingSegmentsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [standingSegments count]; i++) {
+            YMKSubpolyline *position = [[standingSegments objectAtIndex:i] position];
+            NSMutableDictionary *positionJson = [[NSMutableDictionary alloc] init];
+            [positionJson setValue:[self createMapFromPolyline:[position begin]] forKey:@"begin"];
+            [positionJson setValue:[self createMapFromPolyline:[position end]] forKey:@"end"];
+
+            NSMutableDictionary *standingSegmentJson = [[NSMutableDictionary alloc] init];
+            [standingSegmentJson setValue:positionJson forKey:@"position"];
+
+            [standingSegmentsArray addObject:standingSegmentJson];
+        }
+        [jsonRoute setObject:standingSegmentsArray forKey:@"standingSegments"];
     }
 }
 
@@ -462,6 +579,129 @@
         }
         [jsonRoute setObject:ruggedRoadsArray forKey:@"ruggedRoads"];
     }
+}
+
+- (void)populateLaneSigns:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingLaneSign *> *laneSigns = [route laneSigns];
+    if (laneSigns != nil) {
+        NSMutableArray *laneSignsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [laneSigns count]; i++) {
+            YMKDrivingLaneSign *laneSign = [laneSigns objectAtIndex:i];
+
+            NSMutableDictionary *laneSignJson = [[NSMutableDictionary alloc] init];
+            [laneSignJson setValue:[self createMapFromPolyline:[laneSign position]] forKey:@"position"];
+
+            NSArray<YMKDrivingLane *> *lanes = [laneSign lanes];
+            if (lanes != nil) {
+                NSMutableArray *lanesArray = [[NSMutableArray alloc] init];
+                for (int j = 0; j < [lanes count]; j++) {
+                    YMKDrivingLane *lane = [lanes objectAtIndex:j];
+
+                    NSMutableDictionary *laneJson = [[NSMutableDictionary alloc] init];
+
+                    if ([lane highlightedDirection] != nil) {
+                        [laneJson setValue:[self getDirectionById:[lane highlightedDirection]] forKey:@"highlightedDirection"];
+                    }
+
+                    NSString *laneKind = nil;
+
+                    switch ([lane laneKind]) {
+                        case YMKDrivingLaneKindUnknownKind:
+                            laneKind = @"UNKNOWN_KIND";
+                            break;
+                        case YMKDrivingLaneKindPlainLane:
+                            laneKind = @"PLAIN_LANE";
+                            break;
+                        case YMKDrivingLaneKindBusLane:
+                            laneKind = @"BUS_LANE";
+                            break;
+                        case YMKDrivingLaneKindTramLane:
+                            laneKind = @"TRAM_LANE";
+                            break;
+                        case YMKDrivingLaneKindTaxiLane:
+                            laneKind = @"TAXI_LANE";
+                            break;
+                        case YMKDrivingLaneKindBikeLane:
+                            laneKind = @"BIKE_LANE";
+                            break;
+                        default:
+                            laneKind = @"UNKNOWN_KIND";
+                            break;
+                    }
+
+                    [laneJson setValue:laneKind forKey:@"laneKind"];
+
+                    NSArray<NSNumber *> *directions = [lane directions];
+                    if (directions != nil) {
+                        NSMutableArray *directionsArray = [[NSMutableArray alloc] init];
+                        for (int k = 0; k < [directions count]; k++) {
+                            [directionsArray addObject:[self getDirectionById:[directions objectAtIndex:k]]];
+                        }
+                        [laneJson setValue:directionsArray forKey:@"directions"];
+                    }
+
+                    [lanesArray addObject:laneJson];
+                }
+                [laneSignJson setValue:lanesArray forKey:@"lanes"];
+            }
+
+            [laneSignsArray addObject:laneSignJson];
+        }
+        [jsonRoute setObject:laneSignsArray forKey:@"laneSigns"];
+    }
+}
+
+- (NSString *)getDirectionById:(NSNumber*)directionId {
+    NSString *direction = nil;
+
+    switch ([directionId intValue]) {
+        case 0:
+            direction = @"UNKNOWN_DIRECTION";
+            break;
+        case 1:
+            direction = @"LEFT180";
+            break;
+        case 2:
+            direction = @"LEFT135";
+            break;
+        case 3:
+            direction = @"LEFT90";
+            break;
+        case 4:
+            direction = @"LEFT45";
+            break;
+        case 5:
+            direction = @"STRAIGHT_AHEAD";
+            break;
+        case 6:
+            direction = @"RIGHT45";
+            break;
+        case 7:
+            direction = @"RIGHT90";
+            break;
+        case 8:
+            direction = @"RIGHT135";
+            break;
+        case 9:
+            direction = @"RIGHT180";
+            break;
+        case 10:
+            direction = @"LEFT_FROM_RIGHT";
+            break;
+        case 11:
+            direction = @"RIGHT_FROM_LEFT";
+            break;
+        case 12:
+            direction = @"LEFT_SHIFT";
+            break;
+        case 13:
+            direction = @"RIGHT_SHIFT";
+            break;
+        default:
+            direction = @"UNKNOWN_DIRECTION";
+            break;
+    }
+    return direction;
 }
 
 - (void)populateTollRoads:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
