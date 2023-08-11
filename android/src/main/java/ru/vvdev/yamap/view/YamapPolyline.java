@@ -121,7 +121,6 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
         if (mapObject != null) {
             mapObject.setGeometry(polyline);
             mapObject.setStrokeWidth(strokeWidth);
-            mapObject.setStrokeColor(strokeColor);
             mapObject.setZIndex(zIndex);
             mapObject.setDashLength(dashLength);
             mapObject.setGapLength(gapLength);
@@ -136,9 +135,17 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
                     mapObject.arrows().get(0).setOutlineColor(arrow.getArrowOutlineColor());
                 }
             }
-            if (Objects.nonNull(gradientDto)) {
-                mapObject.setStrokeColors(gradientDto.getColors(), gradientDto.getWeights());
+            if (Objects.nonNull(gradientDto)
+                    && mapObject.getGeometry().getPoints().size() - 1 == gradientDto.getColors().size()) {
+                final List<Integer> strokeColors = new ArrayList<>();
+                for (int i = 0; i < gradientDto.getColors().size(); i++) {
+                    strokeColors.add(i);
+                    mapObject.setPaletteColor(i, gradientDto.getColors().get(i));
+                }
+                mapObject.setStrokeColors(strokeColors);
                 mapObject.setGradientLength(gradientDto.getLength());
+            } else {
+                mapObject.setStrokeColor(strokeColor);
             }
         }
     }

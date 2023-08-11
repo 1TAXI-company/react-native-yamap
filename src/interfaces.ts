@@ -24,12 +24,7 @@ export interface Arrow {
 
 export interface GradientInfo {
   length?: number;
-  strokeInfos: StrokeInfo[];
-}
-
-export interface StrokeInfo {
-  color: number;
-  weight: number;
+  colors: number[];
 }
 
 export interface MapLoaded {

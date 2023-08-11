@@ -138,18 +138,14 @@ public class YamapPolylineManager extends ViewGroupManager<YamapPolyline> {
         {
             final GradientDto gradientDto = new GradientDto();
             gradientDto.setLength((float) readableMap.getDouble("length"));
-            final ReadableArray strokeInfos = readableMap.getArray("strokeInfod");
+            final ReadableArray readableArray = readableMap.getArray("colors");
             final List<Integer> colors = new ArrayList<>();
-            final List<Double> weights = new ArrayList<>();
-            if (Objects.nonNull(strokeInfos)) {
-                for (int i = 0; i < strokeInfos.size(); i++) {
-                    final ReadableMap strokeInfo = strokeInfos.getMap(i);
-                    colors.add(strokeInfo.getInt("color"));
-                    weights.add(strokeInfo.getDouble("weight"));
+            if (Objects.nonNull(readableArray)) {
+                for (int i = 0; i < readableArray.size(); i++) {
+                    colors.add(readableArray.getInt(i));
                 }
             }
             gradientDto.setColors(colors);
-            gradientDto.setWeights(weights);
             castToPolylineView(view).setGradient(gradientDto);
         }
     }

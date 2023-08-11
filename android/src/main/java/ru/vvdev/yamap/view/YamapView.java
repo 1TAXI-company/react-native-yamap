@@ -345,7 +345,8 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             ArrayList<RequestPoint> _points = new ArrayList<>();
             for (int i = 0; i < points.size(); ++i) {
                 Point point = points.get(i);
-                final RequestPointType requestPointType = RequestPointType.WAYPOINT;
+                final RequestPointType requestPointType =
+                        RequestPointType.WAYPOINT;
                 RequestPoint _p = new RequestPoint(point, requestPointType, null);
                 _points.add(_p);
             }
