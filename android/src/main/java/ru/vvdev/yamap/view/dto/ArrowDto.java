@@ -4,8 +4,10 @@ import android.graphics.Color;
 
 import com.yandex.mapkit.geometry.PolylinePosition;
 
+import java.util.List;
+
 public class ArrowDto {
-    private PolylinePosition position;
+    private List<PolylinePosition> positions;
     private float length;
 
     private int arrowOutlineColor = Color.WHITE;
@@ -14,12 +16,12 @@ public class ArrowDto {
 
     private int arrowColor = Color.WHITE;
 
-    public PolylinePosition getPosition() {
-        return position;
+    public List<PolylinePosition> getPositions() {
+        return positions;
     }
 
-    public void setPosition(PolylinePosition position) {
-        this.position = position;
+    public void setPositions(List<PolylinePosition> positions) {
+        this.positions = positions;
     }
 
     public float getLength() {

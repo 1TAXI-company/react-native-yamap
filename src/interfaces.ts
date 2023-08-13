@@ -15,8 +15,7 @@ export interface ScreenPoint {
 
 export interface Arrow {
   length: number;
-  segmentIndex: number;
-  segmentPosition: number
+  positions: Position[];
   arrowOutlineColor: number;
   arrowOutlineWidth: number;
   arrowColor: number;

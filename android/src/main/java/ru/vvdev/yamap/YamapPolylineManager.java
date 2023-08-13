@@ -123,12 +123,17 @@ public class YamapPolylineManager extends ViewGroupManager<YamapPolyline> {
         if (Objects.nonNull(readableMap)) {
             final ArrowDto arrowDto = new ArrowDto();
             arrowDto.setLength((float) readableMap.getDouble("length"));
-            arrowDto.setPosition(new PolylinePosition(readableMap.getInt("segmentIndex"),
-                    readableMap.getDouble("segmentPosition")));
+            final ReadableArray positions = readableMap.getArray("positions");
+            arrowDto.setPositions(new ArrayList<>());
+            for (int i = 0; i < positions.size(); i++) {
+                final ReadableMap positionMap = positions.getMap(i);
+                arrowDto.getPositions().add(new PolylinePosition(positionMap.getInt("segmentIndex"),
+                        positionMap.getDouble("segmentPosition")));
+            }
             arrowDto.setArrowColor(readableMap.getInt("arrowColor"));
             arrowDto.setArrowOutlineColor(readableMap.getInt("arrowOutlineColor"));
             arrowDto.setArrowOutlineWidth((float) readableMap.getDouble("arrowOutlineWidth"));
-            castToPolylineView(view).setArrow(arrowDto);
+            castToPolylineView(view).setArrowDto(arrowDto);
         }
     }
 
