@@ -149,22 +149,6 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
                         view.emitScreenToWorldPoints(args.getArray(0), args.getString(1));
                     }
                     break;
-                case "getRoutePositionInfo":
-                    if (args != null) {
-                        getRoutePositionInfo(view, args.getString(0), args.getString(1));
-                    }
-                    break;
-                case "isInRoute":
-                    if (args != null) {
-                        isInRoute(view, args.getString(0), args.getString(1), args.getString(2));
-                    }
-                    break;
-                case "getReachedPosition":
-                    if (args != null) {
-                        getReachedPosition(view, args.getString(0), args.getString(1));
-                    }
-                    break;
-
 
                 default:
                     throw new IllegalArgumentException(String.format(
@@ -235,26 +219,6 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
             }
 
             castToYaMapView(view).findRoutes(points, vehicles, id, needNavigationInfo);
-        }
-    }
-
-    private void getRoutePositionInfo(final View view, final String routeId, final String eventId) {
-        if (Objects.nonNull(routeId)) {
-            castToYaMapView(view).getRoutePositionInfo(routeId, eventId);
-        }
-    }
-
-    private void isInRoute(final View view, final String routeId, final String checkableRouteId,
-                           final String eventId) {
-        if (Objects.nonNull(routeId) && Objects.nonNull(checkableRouteId)) {
-            castToYaMapView(view).isInRoute(routeId, checkableRouteId, eventId);
-        }
-    }
-
-    private void getReachedPosition(final View view, final String routeId,
-                           final String eventId) {
-        if (Objects.nonNull(routeId)) {
-            castToYaMapView(view).getReachedPosition(routeId, eventId);
         }
     }
 

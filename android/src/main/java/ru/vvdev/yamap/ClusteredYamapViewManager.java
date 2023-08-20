@@ -147,17 +147,6 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
                     view.emitScreenToWorldPoints(args.getArray(0), args.getString(1));
                 }
                 break;
-            case "getRoutePositionInfo":
-                if (args != null) {
-                    getRoutePositionInfo(view, args.getString(0), args.getString(1));
-                }
-                break;
-            case "isInRoute":
-                if (args != null) {
-                    isInRoute(view, args.getString(0), args.getString(1),
-                            args.getString(2));
-                }
-                break;
 
             default:
                 throw new IllegalArgumentException(String.format(
@@ -195,19 +184,6 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
             Point centerPosition = new Point(center.getDouble("lat"), center.getDouble("lon"));
             CameraPosition pos = new CameraPosition(centerPosition, zoom, azimuth, tilt);
             view.setCenter(pos, duration, animation);
-        }
-    }
-
-    private void getRoutePositionInfo(final View view, final String routeId, final String eventId) {
-        if (Objects.nonNull(routeId)) {
-            castToYaMapView(view).getRoutePositionInfo(routeId, eventId);
-        }
-    }
-
-    private void isInRoute(final View view, final String routeId, final String checkableRouteId,
-                           final String eventId) {
-        if (Objects.nonNull(routeId) && Objects.nonNull(checkableRouteId)) {
-            castToYaMapView(view).isInRoute(routeId, checkableRouteId, eventId);
         }
     }
 

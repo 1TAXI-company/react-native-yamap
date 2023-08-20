@@ -8,12 +8,14 @@ import ru.vvdev.yamap.populator.DrivingRoutePopulator;
 import ru.vvdev.yamap.populator.LaneSignsPopulator;
 import ru.vvdev.yamap.populator.MetadataPopulator;
 import ru.vvdev.yamap.populator.RestrictedInfoPopulator;
+import ru.vvdev.yamap.populator.SectionPopulator;
 import ru.vvdev.yamap.populator.impl.CrossingPopulatorImpl;
 import ru.vvdev.yamap.populator.impl.DirectionSignsPopulatorImpl;
 import ru.vvdev.yamap.populator.impl.DrivingRoutePopulatorImpl;
 import ru.vvdev.yamap.populator.impl.LaneSignsPopulatorImpl;
 import ru.vvdev.yamap.populator.impl.MetadataPopulatorImpl;
 import ru.vvdev.yamap.populator.impl.RestrictedInfoPopulatorImpl;
+import ru.vvdev.yamap.populator.impl.SectionPopulatorImpl;
 
 public class PopulatorFactory {
     private static PopulatorFactory instance;
@@ -28,6 +30,8 @@ public class PopulatorFactory {
     private CrossingPopulator crossingPopulator;
 
     private RestrictedInfoPopulator restrictedInfoPopulator;
+
+    private SectionPopulator sectionPopulator;
 
     private PopulatorFactory() {
 
@@ -61,6 +65,11 @@ public class PopulatorFactory {
     public RestrictedInfoPopulator createRestrictedInfoPopulator() {
         return Objects.nonNull(restrictedInfoPopulator) ?
                 restrictedInfoPopulator : new RestrictedInfoPopulatorImpl();
+    }
+
+    public SectionPopulator createSectionPopulator() {
+        return Objects.nonNull(sectionPopulator) ?
+                sectionPopulator : new SectionPopulatorImpl();
     }
 
     public static PopulatorFactory getInstance() {

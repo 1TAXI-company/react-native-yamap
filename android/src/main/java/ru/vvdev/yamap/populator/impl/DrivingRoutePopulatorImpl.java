@@ -29,6 +29,7 @@ import ru.vvdev.yamap.populator.DrivingRoutePopulator;
 import ru.vvdev.yamap.populator.LaneSignsPopulator;
 import ru.vvdev.yamap.populator.MetadataPopulator;
 import ru.vvdev.yamap.populator.RestrictedInfoPopulator;
+import ru.vvdev.yamap.populator.SectionPopulator;
 import ru.vvdev.yamap.populator.factory.PopulatorFactory;
 import ru.vvdev.yamap.utils.PopulatorUtils;
 
@@ -49,6 +50,9 @@ public class DrivingRoutePopulatorImpl implements DrivingRoutePopulator {
     private RestrictedInfoPopulator restrictedInfoPopulator = PopulatorFactory.getInstance()
             .createRestrictedInfoPopulator();
 
+    private SectionPopulator sectionPopulator = PopulatorFactory.getInstance()
+            .createSectionPopulator();
+
     @Override
     public void populateMandatoryData(final WritableMap jsonRoute,
                                       final DrivingRoute drivingRoute) {
@@ -59,7 +63,8 @@ public class DrivingRoutePopulatorImpl implements DrivingRoutePopulator {
 
     @Override
     public void populateNavigationData(final WritableMap jsonRoute,
-                                       final DrivingRoute drivingRoute) {
+                                       final DrivingRoute drivingRoute,
+                                       final int routeIndex) {
         populateSpeedLimits(jsonRoute, drivingRoute.getSpeedLimits());
         populateSpeedBumps(jsonRoute, drivingRoute.getSpeedBumps());
         populateCheckpoints(jsonRoute, drivingRoute.getCheckpoints());
@@ -76,6 +81,7 @@ public class DrivingRoutePopulatorImpl implements DrivingRoutePopulator {
         directionSignsPopulator.populateDirectionSigns(jsonRoute, drivingRoute.getDirectionSigns());
         crossingPopulator.populateCrossings(jsonRoute, drivingRoute);
         restrictedInfoPopulator.populateCrossings(jsonRoute, drivingRoute);
+        sectionPopulator.populateSections(jsonRoute, drivingRoute, routeIndex);
     }
 
     private void populateJams(WritableMap writableMap, DrivingRoute drivingRoute) {

@@ -95,6 +95,12 @@ export interface Position {
   segmentPosition: number
 }
 
+export interface DistanceInfo {
+  routeId: string;
+  position1?: Position;
+  position2: Position;
+}
+
 export interface PolylinePosition {
   position: Position;
 }
@@ -104,30 +110,6 @@ export interface RoutesFoundEvent<T extends (DrivingInfo | MasstransitInfo)> {
     status: 'success' | 'error';
     id: string;
     routes: RouteInfo<T>[];
-  };
-}
-
-export interface RoutePositionInfoEvent {
-  nativeEvent: {
-    status: 'success' | 'noRouteWithSuchId';
-    id: string;
-    routePositionInfo: RoutePositionInfo;
-  };
-}
-
-export interface ReachedPositionEvent {
-  nativeEvent: {
-    status: 'success' | 'noRouteWithSuchId';
-    id: string;
-    reachedPosition: PolylinePosition;
-  };
-}
-
-export interface IsOnRouteEvent {
-  nativeEvent: {
-    status: 'success' | 'noRouteWithSuchId';
-    id: string;
-    isInRoute: IsOnRoute;
   };
 }
 

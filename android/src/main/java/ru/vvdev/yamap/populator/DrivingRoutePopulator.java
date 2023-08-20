@@ -8,5 +8,6 @@ public interface DrivingRoutePopulator {
                                final DrivingRoute drivingRoute);
 
     void populateNavigationData(final WritableMap jsonRoute,
-                              final DrivingRoute drivingRoute);
+                                final DrivingRoute drivingRoute,
+                                final int routeIndex);
 }

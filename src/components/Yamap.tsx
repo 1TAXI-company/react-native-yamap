@@ -26,7 +26,8 @@ import {
   Animation,
   MapLoaded,
   YandexLogoPosition,
-  YandexLogoPadding, RoutePositionInfoEvent, IsOnRouteEvent, ReachedPositionEvent
+  YandexLogoPadding,
+  DistanceInfo, IsOnRoute, PolylinePosition, RoutePositionInfo
 } from '../interfaces';
 import { processColorProps } from '../utils';
 
@@ -105,6 +106,32 @@ export class YaMap extends React.Component<YaMapProps> {
     });
   }
 
+  //Return distance between 2 polyline positions on the polyline from the route. Route stores in memory and we are
+  //getting it via routeId
+  public getDistance(distanceInfo: DistanceInfo): Promise<number> {
+    return NativeYamapModule.getDistance(distanceInfo);
+  }
+
+  // this function will get current position on the route with id that you provide and will check is this point belongs
+  // to another route with id that you provide as 2 argument
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
+  public isInRoute(routeId: String, checkableRouteId: String): Promise<IsOnRoute>  {
+    return NativeYamapModule.isInRoute(routeId, checkableRouteId);
+  }
+
+  // this function will return your current position on the route (point index)
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/geometry/PolylinePosition
+  public getReachedPosition(routeId: String): Promise<PolylinePosition> {
+    return NativeYamapModule.getReachedPosition(routeId);
+  }
+
+  // this function will get current position, and will collect some info (details you can find in the interface)
+  // from this point belongs to the route with id that you passed
+  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
+  public getRoutePositionInfo(routeId: String): Promise<RoutePositionInfo>  {
+    return NativeYamapModule.getRoutePositionInfo(routeId);
+  }
+
   public findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean,  callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {
     this._findRoutes(points, vehicles, needNavigationInfo, callback);
   }
@@ -119,41 +146,6 @@ export class YaMap extends React.Component<YaMapProps> {
 
   public findDrivingRoutes(points: Point[], needNavigationInfo: boolean, callback: (event: RoutesFoundEvent<DrivingInfo>) => void) {
     this._findRoutes(points, ['car'], needNavigationInfo, callback);
-  }
-
-  // this function will get current position, and will collect some info (details you can find in the interface)
-  // from this point belongs to the route with id that you passed
-  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
-  public getRoutePositionInfo(routeId: String, callback: (event: RoutePositionInfoEvent) => void) {
-    const cbId = CallbacksManager.addCallback(callback);
-    UIManager.dispatchViewManagerCommand(
-        findNodeHandle(this),
-        this.getCommand('getRoutePositionInfo'),
-        [routeId, cbId]
-    );
-  }
-
-  // this function will get current position on the route with id that you provide and will check is this point belongs
-  // to another route with id that you provide as 2 argument
-  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
-  public isInRoute(routeId: String, checkableRouteId: String, callback: (event: IsOnRouteEvent) => void) {
-    const cbId = CallbacksManager.addCallback(callback);
-    UIManager.dispatchViewManagerCommand(
-        findNodeHandle(this),
-        this.getCommand('isInRoute'),
-        [routeId, checkableRouteId, cbId]
-    );
-  }
-
-  // this function will return your current position on the route (point index)
-  // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/geometry/PolylinePosition
-  public getReachedPosition(routeId: String, callback: (event: ReachedPositionEvent) => void) {
-    const cbId = CallbacksManager.addCallback(callback);
-    UIManager.dispatchViewManagerCommand(
-        findNodeHandle(this),
-        this.getCommand('getReachedPosition'),
-        [routeId, cbId]
-    );
   }
 
   public fitAllMarkers() {
@@ -252,22 +244,6 @@ export class YaMap extends React.Component<YaMapProps> {
     CallbacksManager.call(id, routes);
   }
 
-  private processRoutePositionInfo(event: NativeSyntheticEvent<{ id: string } & RoutePositionInfoEvent>) {
-    const { id, ...routePositionInfo} = event.nativeEvent;
-    CallbacksManager.call(id, routePositionInfo);
-  }
-
-  private processIsInRoute(event: NativeSyntheticEvent<{ id: string } & IsOnRouteEvent>) {
-    const { id, ...isInRoute} = event.nativeEvent;
-    CallbacksManager.call(id, isInRoute);
-  }
-
-  private processReachedPosition(event: NativeSyntheticEvent<{ id: string } & ReachedPositionEvent>) {
-    console.log("1");
-    const { id, ...reachedPosition} = event.nativeEvent;
-    CallbacksManager.call(id, reachedPosition);
-  }
-
   private processCameraPosition(event: NativeSyntheticEvent<{ id: string } & CameraPosition>) {
     const { id, ...point } = event.nativeEvent;
     CallbacksManager.call(id, point);
@@ -295,10 +271,7 @@ export class YaMap extends React.Component<YaMapProps> {
   private getProps() {
     const props = {
       ...this.props,
-      reachedPosition: this.processReachedPosition,
       onRouteFound: this.processRoute,
-      isInRoute: this.processIsInRoute,
-      routePositionInfo: this.processRoutePositionInfo,
       onCameraPositionReceived: this.processCameraPosition,
       onVisibleRegionReceived: this.processVisibleRegion,
       onWorldToScreenPointsReceived: this.processWorldToScreenPointsReceived,
