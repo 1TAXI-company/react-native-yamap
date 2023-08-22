@@ -3,6 +3,8 @@
 #import <math.h>
 #import "YamapPolyline.h"
 #import "RNYamap.h"
+#import "View/dto/ArrowDTO.h"
+#import "View/dto/GradientDTO.h"
 
 #import "View/YamapPolylineView.h"
 #import "View/RNYMView.h"
@@ -74,6 +76,18 @@ RCT_CUSTOM_VIEW_PROPERTY(outlineWidth, NSNumber, YamapPolylineView) {
 
 RCT_CUSTOM_VIEW_PROPERTY(zIndex, NSNumber, YamapPolylineView) {
     [view setZIndex: json];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(turnRadius, NSNumber, YamapPolylineView) {
+    [view setTurnRadius: json];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(arrow, ArrowDTO, YamapPolylineView) {
+    [view setArrowDTO:[RCTConvert ArrowDTO:json]];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(gradientInfo, GradientDTO, YamapPolylineView) {
+    [view setGradientDTO:[RCTConvert GradientDTO:json]];
 }
 
 @end

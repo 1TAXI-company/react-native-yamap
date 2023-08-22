@@ -1,6 +1,8 @@
 #import <React/RCTComponent.h>
 
 #import <MapKit/MapKit.h>
+#import "dto/ArrowDTO.h"
+#import "dto/GradientDTO.h"
 @import YandexMapsMobile;
 
 #ifndef MAX
@@ -21,6 +23,9 @@
     NSNumber* gapLength;
     NSNumber* outlineWidth;
     NSNumber* zIndex;
+    NSNumber* turnRadius;
+    ArrowDTO* arrowDTO;
+    GradientDTO* gradientDTO;
 }
 
 - (instancetype)init {
@@ -35,6 +40,7 @@
     dashOffset =  [[NSNumber alloc] initWithInt:0];
     _points = [[NSMutableArray alloc] init];
     polyline = [YMKPolyline polylineWithPoints:_points];
+    turnRadius =  [[NSNumber alloc] initWithInt:10];
 
     return self;
 }
@@ -49,7 +55,35 @@
         [mapObject setGapLength:[gapLength floatValue]];
         [mapObject setDashOffset:[dashOffset floatValue]];
         [mapObject setOutlineWidth:[outlineWidth floatValue]];
-        [mapObject setOutlineColor:outlineColor];
+        [mapObject setTurnRadius:[turnRadius floatValue]];
+
+        if (arrowDTO != nil) {
+            for (YMKPolylinePosition* position in [arrowDTO positions]) {
+                [mapObject addArrowWithPosition:position length:[arrowDTO length] fillColor:[arrowDTO arrowColor]];
+            }
+
+            NSArray<YMKArrow*> *arrows = [mapObject arrows];
+
+            if ([arrows count] > 0) {
+                for (YMKArrow* arrow in arrows) {
+                    [arrow setOutlineColor:[arrowDTO arrowOutlineColor]];
+                    [arrow setOutlineWidth:[arrowDTO arrowOutlineWidth]];
+                }
+            }
+        }
+
+        if (gradientDTO != nil && [[[mapObject geometry] points] count] - 1 == [[gradientDTO colors] count]) {
+            [mapObject setGradientLength:[gradientDTO length]];
+
+            NSMutableArray<NSNumber *> *strokeColors = [[NSMutableArray alloc] init];
+            for (int i = 0; i < [[gradientDTO colors] count]; i++) {
+                [strokeColors addObject:@(i)];
+                [mapObject setPaletteColorWithColorIndex:i color:[[gradientDTO colors] objectAtIndex:i]];
+            }
+            [mapObject setStrokeColorsWithColors:strokeColors];
+        } else {
+            [mapObject setOutlineColor:outlineColor];
+        }
     }
 }
 
@@ -90,6 +124,21 @@
 
 - (void)setZIndex:(NSNumber*)_zIndex {
     zIndex = _zIndex;
+    [self updatePolyline];
+}
+
+- (void)setTurnRadius:(NSNumber*)_turnRadius {
+    turnRadius = _turnRadius;
+    [self updatePolyline];
+}
+
+- (void)setArrowDTO:(ArrowDTO*)_arrowDTO {
+    arrowDTO = _arrowDTO;
+    [self updatePolyline];
+}
+
+- (void)setGradientDTO:(GradientDTO*)_gradientDTO {
+    gradientDTO = _gradientDTO;
     [self updatePolyline];
 }
 

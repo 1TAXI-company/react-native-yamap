@@ -1,5 +1,7 @@
 #import <React/RCTConvert.h>
 #import <Foundation/Foundation.h>
+#import "../View/dto/ArrowDTO.h"
+#import "../View/dto/GradientDTO.h"
 @import YandexMapsMobile;
 
 @interface RCTConvert(Yamap)
@@ -38,6 +40,47 @@
     }
 
     return result;
+}
+
++ (ArrowDTO*)ArrowDTO:(id)json {
+    json = [self NSDictionary:json];
+
+    UIColor *arrowOutlineColor = [RCTConvert UIColor:json[@"arrowOutlineColor"]];
+    float arrowOutlineWidth = [self float:json[@"arrowOutlineWidth"]];
+    float length = [self float:json[@"length"]];
+    UIColor *arrowColor = [RCTConvert UIColor:json[@"arrowColor"]];
+
+    NSArray* parsedArray = [self NSArray:json[@"positions"]];
+    NSMutableArray<YMKPolylinePosition *>* positions = [[NSMutableArray alloc] init];
+
+    for (NSDictionary* jsonMarker in parsedArray) {
+        NSUInteger segmentIndex = [[jsonMarker valueForKey:@"segmentIndex"] unsignedIntegerValue];
+        double segmentPosition = [[jsonMarker valueForKey:@"segmentPosition"] doubleValue];
+        YMKPolylinePosition *point = [YMKPolylinePosition polylinePositionWithSegmentIndex:segmentIndex segmentPosition:segmentPosition];
+
+        [positions addObject:point];
+    }
+
+    ArrowDTO *arrow = [[ArrowDTO alloc] initWithArrowOutlineColor:arrowOutlineColor arrowOutlineWidth:arrowOutlineWidth length:length arrowColor:arrowColor positions:positions];
+
+    return arrow;
+}
+
++ (GradientDTO*)GradientDTO:(id)json {
+    json = [self NSDictionary:json];
+
+    float length = [self float:json[@"length"]];
+
+    NSArray* parsedArray = [self NSArray:json[@"colors"]];
+    NSMutableArray<UIColor *>* colors = [[NSMutableArray alloc] init];
+
+    for (NSDictionary* jsonMarker in parsedArray) {
+        [colors addObject:[RCTConvert UIColor:jsonMarker]];
+    }
+
+    GradientDTO *gradientDTO = [[GradientDTO alloc] initWithLength:length colors:colors];
+
+    return gradientDTO;
 }
 
 + (NSMutableArray<YMKScreenPoint*>*)ScreenPoints:(id)json {
