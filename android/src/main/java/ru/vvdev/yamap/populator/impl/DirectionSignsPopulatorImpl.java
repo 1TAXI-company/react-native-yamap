@@ -59,7 +59,7 @@ public class DirectionSignsPopulatorImpl implements DirectionSignsPopulator {
                 populateIcon(item.getIcon(), itemJson);
                 populateRoad(item.getRoad(), itemJson);
             }
-            json.putArray("lanes", lanesJson);
+            json.putArray("items", lanesJson);
         }
     }
 
