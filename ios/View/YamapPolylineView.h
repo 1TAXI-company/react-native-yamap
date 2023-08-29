@@ -16,6 +16,9 @@
 - (void)setDashOffset:(NSNumber*)offset;
 - (void)setOutlineWidth:(NSNumber*)width;
 - (void)setZIndex:(NSNumber*)_zIndex;
+- (void)setTurnRadius:(NSNumber*)_turnRadius;
+- (void)setArrowDTO:(ArrowDTO*)_arrowDTO;
+- (void)setGradientDTO:(GradientDTO*)_gradientDTO;
 - (void)setPolylinePoints:(NSArray<YMKPoint*>*)_points;
 - (NSMutableArray<YMKPoint*>*)getPoints;
 - (YMKPolyline*)getPolyline;

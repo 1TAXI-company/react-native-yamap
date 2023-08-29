@@ -86,41 +86,20 @@
     return self;
 }
 
-- (NSDictionary*)convertDrivingRouteSection:(YMKDrivingRoute*)route withSection:(YMKDrivingSection*)section {
-    int routeIndex = 0;
-    NSMutableDictionary *routeMetadata = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary *sectionWeightData = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary *transports = [[NSMutableDictionary alloc] init];
-    NSMutableArray *stops = [[NSMutableArray alloc] init];
-    [sectionWeightData setObject:section.metadata.weight.time.text forKey:@"time"];
-    [sectionWeightData setObject:section.metadata.weight.timeWithTraffic.text forKey:@"timeWithTraffic"];
-    [sectionWeightData setObject:@(section.metadata.weight.distance.value) forKey:@"distance"];
-    [routeMetadata setObject:sectionWeightData forKey:@"sectionInfo"];
-    [routeMetadata setObject:@(routeIndex) forKey:@"routeIndex"];
-    [routeMetadata setObject:stops forKey:@"stops"];
-    [routeMetadata setObject:UIColor.darkGrayColor forKey:@"sectionColor"];
+- (NSDictionary*)convertDrivingRouteSection:(YMKDrivingRoute*)route withSection:(YMKDrivingSection*)section withRouteIndex:(int)routeIndex {
+    NSMutableDictionary *sectionJson = [[NSMutableDictionary alloc] init];
+
+    [sectionJson setObject:@(routeIndex) forKey:@"routeIndex"];
+
+    [self populateSectionMetadata:section json:sectionJson];
 
     YMKSubpolyline* geometry = section.geometry;
 
     if (geometry != nil) {
-        YMKPolylinePosition *begin = geometry.begin;
-        [routeMetadata setObject:@(geometry.begin.segmentIndex) forKey:@"beginPointIndex"];
-        [routeMetadata setObject:@(geometry.end.segmentIndex) forKey:@"endPointIndex"];
+        [sectionJson setObject:@(geometry.begin.segmentIndex) forKey:@"beginPointIndex"];
+        [sectionJson setObject:@(geometry.end.segmentIndex) forKey:@"endPointIndex"];
     }
 
-    if (section.metadata.weight.distance.value == 0) {
-        [routeMetadata setObject:@"waiting" forKey:@"type"];
-    } else {
-        [routeMetadata setObject:@"car" forKey:@"type"];
-    }
-
-    NSMutableDictionary *wTransports = [[NSMutableDictionary alloc] init];
-
-    for (NSString *key in transports) {
-        [wTransports setObject:[transports valueForKey:key] forKey:key];
-    }
-
-    [routeMetadata setObject:wTransports forKey:@"transports"];
     NSMutableArray* points = [[NSMutableArray alloc] init];
     YMKPolyline* subpolyline = YMKMakeSubpolyline(route.geometry, section.geometry);
 
@@ -131,9 +110,9 @@
         [jsonPoint setValue:[NSNumber numberWithDouble:point.longitude] forKey:@"lon"];
         [points addObject:jsonPoint];
     }
-    [routeMetadata setValue:points forKey:@"points"];
+    [sectionJson setValue:points forKey:@"points"];
 
-    return routeMetadata;
+    return sectionJson;
 }
 
 - (NSDictionary *)convertRouteSection:(YMKMasstransitRoute *)route withSection:(YMKMasstransitSection *)section {
@@ -286,14 +265,7 @@
                 [self populateMandatoryInfo:_route json: jsonRoute];
 
                 if (needNavigationInfo) {
-                    NSMutableArray* sections = [[NSMutableArray alloc] init];
-                    NSArray<YMKDrivingSection *> *_sections = [_route sections];
-                    for (int j = 0; j < [_sections count]; ++j) {
-                        NSDictionary *jsonSection = [self convertDrivingRouteSection:_route withSection: [_sections objectAtIndex:j]];
-                        [sections addObject:jsonSection];
-                    }
-                    [jsonRoute setValue:sections forKey:@"sections"];
-                    [self populateDrivingInfo:_route json: jsonRoute];
+                    [self populateDrivingInfo:_route json: jsonRoute routeIndex:i];
                 }
 
                 [jsonRoutes addObject:jsonRoute];
@@ -398,7 +370,7 @@
     [jsonRoute setObject:metadata forKey:@"metadata"];
 }
 
-- (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+- (void)populateDrivingInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute routeIndex:(int)routeIndex {
     [self populateSpeedLimits:route json:jsonRoute];
     [self populateSpeedBumps:route json:jsonRoute];
     [self populateCheckpoints:route json:jsonRoute];
@@ -411,6 +383,165 @@
     [self populateRequestPoints:route json:jsonRoute];
     [self populateWayPoints:route json:jsonRoute];
     [self populateLaneSigns:route json:jsonRoute];
+    [self populateRailwayCrossings:route json:jsonRoute];
+    [self populatePedestrianCrossings:route json:jsonRoute];
+    [self populateFordCrossings:route json:jsonRoute];
+    [self populateSections:route json:jsonRoute routeIndex:routeIndex];
+}
+
+- (void)populateSections:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute routeIndex:(int)routeIndex {
+    NSMutableArray* sections = [[NSMutableArray alloc] init];
+    NSArray<YMKDrivingSection *> *_sections = [route sections];
+    for (int j = 0; j < [_sections count]; ++j) {
+        NSDictionary *jsonSection = [self convertDrivingRouteSection:route withSection: [_sections objectAtIndex:j] withRouteIndex:routeIndex];
+        [sections addObject:jsonSection];
+    }
+    [jsonRoute setValue:sections forKey:@"sections"];
+}
+
+- (void)populateSectionMetadata:(YMKDrivingSection*)section json:(NSMutableDictionary*)sectionJson {
+    NSMutableDictionary *metadataJson = [[NSMutableDictionary alloc] init];
+
+    YMKDrivingSectionMetadata *metadata = [section metadata];
+
+    NSMutableDictionary *sectionWeightData = [[NSMutableDictionary alloc] init];
+    [sectionWeightData setObject:metadata.weight.time.text forKey:@"time"];
+    [sectionWeightData setObject:metadata.weight.timeWithTraffic.text forKey:@"timeWithTraffic"];
+    [sectionWeightData setObject:@(metadata.weight.distance.value) forKey:@"distance"];
+    [metadataJson setObject:sectionWeightData forKey:@"weight"];
+
+    [metadataJson setObject:@([metadata legIndex]) forKey:@"legIndex"];
+
+    [self populateAnnotation:[metadata annotation] json:metadataJson];
+
+    if ([metadata schemeId] != nil && ![[metadata schemeId] isEqual:[NSNull null]]) {
+        [metadataJson setValue:[metadata schemeId] forKey:@"schemeId"];
+    }
+
+    NSMutableArray *viaPointsJson = [[NSMutableArray alloc] init];
+    NSArray<NSNumber*> *points = [metadata viaPointPositions];
+    for (int i = 0; i < [points count]; i++) {
+        [viaPointsJson addObject:[points objectAtIndex:i]];
+    }
+
+    [metadataJson setValue:viaPointsJson forKey:@"viaPointPositions"];
+
+    [sectionJson setValue:metadataJson forKey:@"metadata"];
+}
+
+- (void)populateAnnotation:(YMKDrivingAnnotation*)annotation json:(NSMutableDictionary*)metadataJson {
+    NSMutableDictionary *annotationJson = [[NSMutableDictionary alloc] init];
+    NSNumber *actionId = [annotation action];
+    if (actionId != nil && ![actionId isEqual:[NSNull null]]) {
+        [annotationJson setValue:[self getActionById:[actionId intValue]] forKey:@"action"];
+    }
+
+    if ([annotation toponym] != nil) {
+        [annotationJson setValue:[annotation toponym] forKey:@"toponym"];
+    }
+
+    [annotationJson setValue:[annotation descriptionText] forKey:@"description"];
+
+    YMKDrivingActionMetadata *actionMetadata = [annotation actionMetadata];
+    NSMutableDictionary *actionMetadataJson = [[NSMutableDictionary alloc] init];
+    if ([actionMetadata uturnMetadata] != nil) {
+        [actionMetadataJson setValue:@([[actionMetadata uturnMetadata] length]) forKey:@"uTurnLength"];
+    }
+
+    if ([actionMetadata leaveRoundaboutMetadada] != nil) {
+        [actionMetadataJson setValue:@([[actionMetadata leaveRoundaboutMetadada] exitNumber]) forKey:@"leaveRoundaboutExitNumber"];
+    }
+
+    [annotationJson setValue:actionMetadataJson forKey:@"actionMetadata"];
+
+    if ([annotation toponymPhrase] != nil) {
+        [annotationJson setValue:[[annotation toponymPhrase] text] forKey:@"toponymPhrase"];
+    }
+
+    YMKDrivingHDAnnotation *hdAnnotation = [annotation hdAnnotation];
+    if (hdAnnotation != nil) {
+        NSMutableDictionary *hdAnnotationJson = [[NSMutableDictionary alloc] init];
+
+        if ([hdAnnotation actionArea] != nil) {
+            NSMutableArray *pointsJson = [[NSMutableArray alloc] init];
+            NSArray<YMKPoint*> *points = [[hdAnnotation actionArea] points];
+            for (int i = 0; i < [points count]; i++) {
+                [pointsJson addObject:[self createMapFromPoint:[points objectAtIndex:i]]];
+            }
+
+            [hdAnnotation setValue:pointsJson forKey:@"actionAreaPoint"];
+        }
+
+        if ([hdAnnotation trajectory] != nil) {
+            NSMutableArray *pointsJson = [[NSMutableArray alloc] init];
+            NSArray<YMKPoint*> *points = [[hdAnnotation trajectory] points];
+            for (int i = 0; i < [points count]; i++) {
+                [pointsJson addObject:[self createMapFromPoint:[points objectAtIndex:i]]];
+            }
+
+            [hdAnnotation setValue:pointsJson forKey:@"trajectory"];
+        }
+
+        [annotationJson setValue:hdAnnotationJson forKey:@"hdAnnotation"];
+    }
+
+    [metadataJson setValue:annotationJson forKey:@"annotation"];
+}
+
+- (void)populateRailwayCrossings:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingRailwayCrossing *> *crossings = [route railwayCrossings];
+    if (crossings != nil) {
+        NSMutableArray *crossingsArray = [[NSMutableArray alloc] init];
+        for (YMKDrivingRailwayCrossing *crossing in crossings) {
+            NSMutableDictionary *crossingJson = [[NSMutableDictionary alloc] init];
+            [crossingJson setValue:[self createMapFromPolyline:[crossing position]] forKey:@"position"];
+
+            NSString *type = nil;
+
+            switch ([crossing type]) {
+                case YMKDrivingRailwayCrossingTypeUnknown:
+                    type = @"UNKNOWN";
+                    break;
+                case YMKDrivingRailwayCrossingTypeRegular:
+                    type = @"REGULAR";
+                    break;
+                default:
+                    type = @"UNKNOWN";
+                    break;
+            }
+
+            [crossingJson setValue:type forKey:@"type"];
+
+            [crossingsArray addObject:crossingJson];
+        }
+        [jsonRoute setValue:crossingsArray forKey:@"railwayCrossing"];
+    }
+}
+
+- (void)populatePedestrianCrossings:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingPedestrianCrossing *> *crossings = [route pedestrianCrossings];
+    if (crossings != nil) {
+        NSMutableArray *crossingsArray = [[NSMutableArray alloc] init];
+        for (YMKDrivingRailwayCrossing *crossing in crossings) {
+            NSMutableDictionary *crossingJson = [[NSMutableDictionary alloc] init];
+            [crossingJson setValue:[self createMapFromPolyline:[crossing position]] forKey:@"position"];
+            [crossingsArray addObject:crossingJson];
+        }
+        [jsonRoute setValue:crossingsArray forKey:@"pedestrianCrossing"];
+    }
+}
+
+- (void)populateFordCrossings:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingFordCrossing *> *crossings = [route fordCrossings];
+    if (crossings != nil) {
+        NSMutableArray *crossingsArray = [[NSMutableArray alloc] init];
+        for (YMKDrivingRailwayCrossing *crossing in crossings) {
+            NSMutableDictionary *crossingJson = [[NSMutableDictionary alloc] init];
+            [crossingJson setValue:[self createMapFromPolyline:[crossing position]] forKey:@"position"];
+            [crossingsArray addObject:crossingJson];
+        }
+        [jsonRoute setValue:crossingsArray forKey:@"fordCrossing"];
+    }
 }
 
 - (void)populateSpeedLimits:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
@@ -581,6 +712,46 @@
     }
 }
 
+/*- (void)populateDirectionSigns:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
+    NSArray<YMKDrivingDirectionSign *> *directionSigns = [route directionSigns];
+    if (directionSigns != nil) {
+        NSMutableArray *directionSignsArray = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [directionSigns count]; i++) {
+            YMKDrivingDirectionSign *directionSign = [directionSigns objectAtIndex:i];
+
+            NSMutableDictionary *directionSignJson = [[NSMutableDictionary alloc] init];
+
+            [directionSignJson setValue:[self createMapFromPolyline:[directionSign position]] forKey:@"position"];
+
+            NSNumber *direction = [directionSign direction];
+            if (direction != nil && ![direction isEqual:[NSNull null]]) {
+                int modifiedDirectionId = [direction intValue] + 1;
+                [directionSignJson setValue:[self getDirectionById:modifiedDirectionId] forKey:@"direction"];
+            }
+
+            NSArray<YMKDrivingDirectionSignItem *> *directionSignsItem = [directionSign items];
+            NSMutableArray *itemsArray = [[NSMutableArray alloc] init];
+            for (YMKDrivingDirectionSignItem *item in directionSignsItem) {
+                NSMutableDictionary *directionSignItemJson = [[NSMutableDictionary alloc] init];
+
+                YMKDrivingDirectionSignToponym *toponym = [item toponym];
+                if (toponym != nil) {
+                    NSMutableDictionary *toponymJson = [[NSMutableDictionary alloc] init];
+                    [toponymJson setValue:[toponym text] forKey:@"text"];
+
+                }
+            }
+            [directionSignJson setValue:itemsArray forKey:@"items"];
+        }
+        [jsonRoute setObject:directionSignsArray forKey:@"directionSigns"];
+    }
+}*/
+
+/*-(void)addSignStyle:(YMKDrivingDirectionSignStyle*)style json:(NSMutableDictionary*)item {
+    NSMutableDictionary *styleJson = [[NSMutableDictionary alloc] init];
+    [styleJson setValue:[style textColor] forKey:@"textColor"];
+}*/
+
 - (void)populateLaneSigns:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
     NSArray<YMKDrivingLaneSign *> *laneSigns = [route laneSigns];
     if (laneSigns != nil) {
@@ -600,7 +771,7 @@
                     NSMutableDictionary *laneJson = [[NSMutableDictionary alloc] init];
 
                     if ([lane highlightedDirection] != nil) {
-                        [laneJson setValue:[self getDirectionById:[lane highlightedDirection]] forKey:@"highlightedDirection"];
+                        [laneJson setValue:[self getDirectionById:[[lane highlightedDirection] intValue]] forKey:@"highlightedDirection"];
                     }
 
                     NSString *laneKind = nil;
@@ -635,7 +806,7 @@
                     if (directions != nil) {
                         NSMutableArray *directionsArray = [[NSMutableArray alloc] init];
                         for (int k = 0; k < [directions count]; k++) {
-                            [directionsArray addObject:[self getDirectionById:[directions objectAtIndex:k]]];
+                            [directionsArray addObject:[self getDirectionById:[[directions objectAtIndex:k] intValue]]];
                         }
                         [laneJson setValue:directionsArray forKey:@"directions"];
                     }
@@ -651,10 +822,10 @@
     }
 }
 
-- (NSString *)getDirectionById:(NSNumber*)directionId {
+- (NSString *)getDirectionById:(int)directionId {
     NSString *direction = nil;
 
-    switch ([directionId intValue]) {
+    switch (directionId) {
         case 0:
             direction = @"UNKNOWN_DIRECTION";
             break;
@@ -702,6 +873,77 @@
             break;
     }
     return direction;
+}
+
+- (NSString *)getActionById:(int)actionId {
+    NSString *action = nil;
+
+    switch (actionId) {
+        case 0:
+            action = @"UNKNOWN";
+            break;
+        case 1:
+            action = @"STRAIGHT";
+            break;
+        case 2:
+            action = @"SLIGHT_LEFT";
+            break;
+        case 3:
+            action = @"SLIGHT_RIGHT";
+            break;
+        case 4:
+            action = @"LEFT";
+            break;
+        case 5:
+            action = @"RIGHT";
+            break;
+        case 6:
+            action = @"HARD_LEFT";
+            break;
+        case 7:
+            action = @"HARD_RIGHT";
+            break;
+        case 8:
+            action = @"FORK_LEFT";
+            break;
+        case 9:
+            action = @"FORK_RIGHT";
+            break;
+        case 10:
+            action = @"UTURN_LEFT";
+            break;
+        case 11:
+            action = @"UTURN_RIGHT";
+            break;
+        case 12:
+            action = @"ENTER_ROUNDABOUT";
+            break;
+        case 13:
+            action = @"LEAVE_ROUNDABOUT";
+            break;
+        case 14:
+            action = @"BOARD_FERRY";
+            break;
+        case 15:
+            action = @"LEAVE_FERRY";
+            break;
+        case 16:
+            action = @"EXIT_LEFT";
+            break;
+        case 17:
+            action = @"EXIT_RIGHT";
+            break;
+        case 18:
+            action = @"FINISH";
+            break;
+        case 19:
+            action = @"WAYPOINT";
+            break;
+        default:
+            action = @"UNKNOWN";
+            break;
+    }
+    return action;
 }
 
 - (void)populateTollRoads:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
