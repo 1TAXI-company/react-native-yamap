@@ -129,6 +129,14 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     private TrafficLayer trafficLayer = null;
     private float maxFps = 60;
     static private HashMap<String, ImageProvider> icons = new HashMap<>();
+
+    private boolean needNavigationInfo = true;
+
+    private YamapView self;
+
+    private String id = "";
+
+    private DrivingSession.DrivingRouteListener drivingRouteListener;
     ReactContext reactContext; // Get the current ReactContext instance
 
 
@@ -165,6 +173,37 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         getMap().addCameraListener(this);
         getMap().addInputListener(this);
         getMap().setMapLoadedListener(this);
+        self = this;
+        drivingRouteListener = new DrivingSession.DrivingRouteListener() {
+            @Override
+            public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
+                WritableArray jsonRoutes = Arguments.createArray();
+                routeManager.cleatExistingRoutes();
+                for (int i = 0; i < routes.size(); ++i) {
+                    DrivingRoute drivingRoute = routes.get(i);
+
+                    WritableMap jsonRoute = Arguments.createMap();
+                    final String id = getRouteId(drivingRoute) ;
+                    jsonRoute.putString("id", id);
+                    routeManager.saveRoute(drivingRoute, id);
+
+                    drivingRoutePopulator.populateMandatoryData(jsonRoute, drivingRoute);
+
+                    if (needNavigationInfo) {
+                        addEventListener(drivingRoute, id);
+                        drivingRoutePopulator.populateNavigationData(jsonRoute, drivingRoute, i);
+                    }
+
+                    jsonRoutes.pushMap(jsonRoute);
+                }
+                self.onRoutesFound(id, jsonRoutes, "success");
+            }
+
+            @Override
+            public void onDrivingRoutesError(@NonNull Error error) {
+                self.onRoutesFound(id, Arguments.createArray(), "error");
+            }
+        };
     }
 
     // REF
@@ -297,39 +336,9 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
     public void findRoutes(ArrayList<Point> points, final ArrayList<String> vehicles,
                            final String id, final boolean needNavigationInfo) {
-        final YamapView self = this;
-
+        this.needNavigationInfo = needNavigationInfo;
+        this.id = id;
         if (vehicles.size() == 1 && vehicles.get(0).equals("car")) {
-            DrivingSession.DrivingRouteListener listener = new DrivingSession.DrivingRouteListener() {
-                @Override
-                public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
-                    WritableArray jsonRoutes = Arguments.createArray();
-                    routeManager.cleatExistingRoutes();
-                    for (int i = 0; i < routes.size(); ++i) {
-                        DrivingRoute drivingRoute = routes.get(i);
-
-                        WritableMap jsonRoute = Arguments.createMap();
-                        final String id = getRouteId(drivingRoute) ;
-                        jsonRoute.putString("id", id);
-                        routeManager.saveRoute(drivingRoute, id);
-
-                        drivingRoutePopulator.populateMandatoryData(jsonRoute, drivingRoute);
-
-                        if (needNavigationInfo) {
-                            addEventListener(drivingRoute, id);
-                            drivingRoutePopulator.populateNavigationData(jsonRoute, drivingRoute, i);
-                        }
-
-                        jsonRoutes.pushMap(jsonRoute);
-                    }
-                    self.onRoutesFound(id, jsonRoutes, "success");
-                }
-
-                @Override
-                public void onDrivingRoutesError(@NonNull Error error) {
-                    self.onRoutesFound(id, Arguments.createArray(), "error");
-                }
-            };
             ArrayList<RequestPoint> _points = new ArrayList<>();
             for (int i = 0; i < points.size(); ++i) {
                 Point point = points.get(i);
@@ -338,7 +347,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                 RequestPoint _p = new RequestPoint(point, requestPointType, null);
                 _points.add(_p);
             }
-            drivingRouter.requestRoutes(_points, new DrivingOptions(), new VehicleOptions(), listener);
+            drivingRouter.requestRoutes(_points, new DrivingOptions(), new VehicleOptions(), drivingRouteListener);
             return;
         }
         ArrayList<RequestPoint> _points = new ArrayList<>();
