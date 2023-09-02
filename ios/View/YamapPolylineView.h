@@ -19,6 +19,7 @@
 - (void)setTurnRadius:(NSNumber*)_turnRadius;
 - (void)setArrowDTO:(ArrowDTO*)_arrowDTO;
 - (void)setGradientDTO:(GradientDTO*)_gradientDTO;
+- (void)setHideSegments:(NSArray<YMKSubpolyline*>*)hideSegments;
 - (void)setPolylinePoints:(NSArray<YMKPoint*>*)_points;
 - (NSMutableArray<YMKPoint*>*)getPoints;
 - (YMKPolyline*)getPolyline;

@@ -26,6 +26,7 @@
     NSNumber* turnRadius;
     ArrowDTO* arrowDTO;
     GradientDTO* gradientDTO;
+    NSMutableArray<YMKSubpolyline*> * hideSegments;
 }
 
 - (instancetype)init {
@@ -83,6 +84,10 @@
             [mapObject setStrokeColorsWithColors:strokeColors];
         } else {
             [mapObject setOutlineColor:outlineColor];
+        }
+
+        if (hideSegments != nil) {
+            [mapObject hideWithSubpolylines:hideSegments];
         }
     }
 }
@@ -145,6 +150,11 @@
 - (void)setPolylinePoints:(NSMutableArray<YMKPoint*>*)points {
     _points = points;
     polyline = [YMKPolyline polylineWithPoints:points];
+    [self updatePolyline];
+}
+
+- (void)setHideSegments:(NSMutableArray<YMKSubpolyline*>*)_hideSegments {
+    hideSegments = _hideSegments;
     [self updatePolyline];
 }
 

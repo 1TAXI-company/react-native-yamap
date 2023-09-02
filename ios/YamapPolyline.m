@@ -90,4 +90,8 @@ RCT_CUSTOM_VIEW_PROPERTY(gradientInfo, GradientDTO, YamapPolylineView) {
     [view setGradientDTO:[RCTConvert GradientDTO:json]];
 }
 
+RCT_CUSTOM_VIEW_PROPERTY(hide, NSArray<YMKSubpolyline>, YamapPolylineView) {
+    [view setHideSegments:[RCTConvert HideSegments:json]];
+}
+
 @end

@@ -42,6 +42,28 @@
     return result;
 }
 
++ (NSMutableArray<YMKSubpolyline*>*)HideSegments:(id)json {
+    NSArray* parsedArray = [self NSArray:json];
+    NSMutableArray<YMKSubpolyline*> *result = [[NSMutableArray alloc] init];
+
+    for (NSDictionary* jsonMarker in parsedArray) {
+        YMKPolylinePosition *begin = [self createPolylinePosition:[jsonMarker objectForKey:@"begin"]];
+        YMKPolylinePosition *end = [self createPolylinePosition:[jsonMarker objectForKey:@"end"]];
+
+        [result addObject:[YMKSubpolyline subpolylineWithBegin:begin end:end]];
+    }
+
+    return result;
+}
+
++ (YMKPolylinePosition*)createPolylinePosition:(NSDictionary*)positionMap {
+    NSUInteger segmentIndex = [[positionMap valueForKey:@"segmentIndex"] unsignedIntegerValue];
+    double segmentPosition = [[positionMap valueForKey:@"segmentPosition"] doubleValue];
+
+    return [YMKPolylinePosition polylinePositionWithSegmentIndex:segmentIndex segmentPosition:segmentPosition];
+}
+
+
 + (ArrowDTO*)ArrowDTO:(id)json {
     json = [self NSDictionary:json];
 
@@ -54,11 +76,7 @@
     NSMutableArray<YMKPolylinePosition *>* positions = [[NSMutableArray alloc] init];
 
     for (NSDictionary* jsonMarker in parsedArray) {
-        NSUInteger segmentIndex = [[jsonMarker valueForKey:@"segmentIndex"] unsignedIntegerValue];
-        double segmentPosition = [[jsonMarker valueForKey:@"segmentPosition"] doubleValue];
-        YMKPolylinePosition *point = [YMKPolylinePosition polylinePositionWithSegmentIndex:segmentIndex segmentPosition:segmentPosition];
-
-        [positions addObject:point];
+        [positions addObject:[self createPolylinePosition:jsonMarker]];
     }
 
     ArrowDTO *arrow = [[ArrowDTO alloc] initWithArrowOutlineColor:arrowOutlineColor arrowOutlineWidth:arrowOutlineWidth length:length arrowColor:arrowColor positions:positions];
