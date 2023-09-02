@@ -136,7 +136,7 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
             if (distance != ERROR_DISTANCE) {
                 promise.resolve(distance);
             } else {
-                promise.reject("ERROR", "no route with such id");
+                promise.reject("ERROR", "noRouteWithSuchId");
             }
 
         }));

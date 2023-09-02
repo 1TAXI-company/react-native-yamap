@@ -7,6 +7,7 @@
 
 #import <MapKit/MapKit.h>
 #import "../Converter/RCTConvert+Yamap.m"
+#import "../RouteStore.h"
 @import YandexMapsMobile;
 
 #ifndef MAX
@@ -46,7 +47,6 @@
     UIColor *userLocationAccuracyFillColor;
     UIColor *userLocationAccuracyStrokeColor;
     float userLocationAccuracyStrokeWidth;
-    NSMutableDictionary *existingRoutes;
 }
 
 - (instancetype)init {
@@ -82,7 +82,6 @@
     [self.mapWindow.map addCameraListenerWithCameraListener:self];
     [self.mapWindow.map addInputListenerWithInputListener:(id<YMKMapInputListener>) self];
     [self.mapWindow.map setMapLoadedListenerWithMapLoadedListener:self];
-    existingRoutes = [[NSMutableDictionary alloc] init];
     return self;
 }
 
@@ -247,7 +246,7 @@
                 return;
             }
 
-            [strongSelf->existingRoutes removeAllObjects];
+            [[RouteStore sharedInstance] clear];
 
             NSMutableDictionary* response = [[NSMutableDictionary alloc] init];
             [response setValue:_id forKey:@"id"];
@@ -258,7 +257,7 @@
                 YMKDrivingRoute *_route = [routes objectAtIndex:i];
 
                 NSString *routeId = _route.routeId != nil && _route.routeId.length > 0 ? _route.routeId : [NSString stringWithFormat:@"%d", i];
-                [strongSelf->existingRoutes setObject:_route forKey:routeId];
+                [[RouteStore sharedInstance] addElement:_route forKey:routeId];
                 NSMutableDictionary *jsonRoute = [[NSMutableDictionary alloc] init];
                 [jsonRoute setValue:routeId forKey:@"id"];
 
