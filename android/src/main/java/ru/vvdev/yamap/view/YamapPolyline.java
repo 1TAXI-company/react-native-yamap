@@ -10,9 +10,11 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.google.android.gms.common.util.CollectionUtils;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.geometry.PolylinePosition;
+import com.yandex.mapkit.geometry.Subpolyline;
 import com.yandex.mapkit.map.Arrow;
 import com.yandex.mapkit.map.MapObject;
 import com.yandex.mapkit.map.MapObjectTapListener;
@@ -42,6 +44,8 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
     private ArrowDto arrowDto;
 
     private GradientDto gradientDto;
+
+    private List<Subpolyline> hideSegments;
 
     private float turnRadius = 10;
 
@@ -118,6 +122,10 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
         updatePolyline();
     }
 
+    public void setHideSegments(final List<Subpolyline> subpolylines) {
+        hideSegments = subpolylines;
+    }
+
     private void updatePolyline() {
         if (mapObject != null) {
             mapObject.setGeometry(polyline);
@@ -152,6 +160,10 @@ public class YamapPolyline extends ViewGroup implements MapObjectTapListener, Re
                 mapObject.setGradientLength(gradientDto.getLength());
             } else {
                 mapObject.setStrokeColor(strokeColor);
+            }
+
+            if (Objects.nonNull(hideSegments)) {
+                mapObject.hide(hideSegments);
             }
         }
     }

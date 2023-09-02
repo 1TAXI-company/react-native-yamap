@@ -1,7 +1,7 @@
 import React from 'react';
 import {requireNativeComponent} from 'react-native';
 import { processColorProps } from '../utils';
-import {Arrow, GradientInfo, Point} from '../interfaces';
+import {Arrow, GradientInfo, HideSegment, Point} from '../interfaces';
 
 export interface PolylineProps {
   strokeColor?: string;
@@ -19,6 +19,8 @@ export interface PolylineProps {
   gradientInfo?: GradientInfo;
 
   turnRadius?: number
+
+  hide?: HideSegment[];
 }
 
 const NativePolylineComponent = requireNativeComponent<PolylineProps>('YamapPolyline');

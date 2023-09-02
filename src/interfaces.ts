@@ -26,6 +26,11 @@ export interface GradientInfo {
   colors: number[];
 }
 
+export interface HideSegment {
+  begin: Position;
+  end: Position;
+}
+
 export interface MapLoaded {
   renderObjectCount: number;
   curZoomModelsLoaded: number;

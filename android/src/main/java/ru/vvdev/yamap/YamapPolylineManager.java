@@ -10,6 +10,7 @@ import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.PolylinePosition;
+import com.yandex.mapkit.geometry.Subpolyline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
+import ru.vvdev.yamap.utils.PopulatorUtils;
 import ru.vvdev.yamap.view.YamapPolyline;
 import ru.vvdev.yamap.view.dto.ArrowDto;
 import ru.vvdev.yamap.view.dto.GradientDto;
@@ -153,5 +155,30 @@ public class YamapPolylineManager extends ViewGroupManager<YamapPolyline> {
             gradientDto.setColors(colors);
             castToPolylineView(view).setGradient(gradientDto);
         }
+    }
+
+    @ReactProp(name = "hide")
+    public void setHideSegments(View view, ReadableArray readableArray) {
+        if (Objects.nonNull(readableArray))
+        {
+            final List<Subpolyline> subpolylines = new ArrayList<>();
+
+            for (int i = 0; i < readableArray.size(); i++) {
+                final ReadableMap readableMap = readableArray.getMap(i);
+
+                final PolylinePosition begin = getPolylinePosition(readableMap.getMap("begin"));
+                final PolylinePosition end = getPolylinePosition(readableMap.getMap("end"));
+
+                subpolylines.add(new Subpolyline(begin, end));
+            }
+
+            castToPolylineView(view).setHideSegments(subpolylines);
+        }
+    }
+
+    private PolylinePosition getPolylinePosition(final ReadableMap readableMap) {
+        final int segmentIndex = readableMap.getInt("segmentIndex");
+        final double segmentPosition = readableMap.getDouble("segmentPosition");
+        return new PolylinePosition(segmentIndex, segmentPosition);
     }
 }
