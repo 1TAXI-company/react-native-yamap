@@ -103,4 +103,32 @@ public class DrivingRouteManager {
             promise.reject("ERROR", "noRouteWithSuchId");
         }
     }
+
+    public void setReachedPosition(final String routeId, final PolylinePosition polylinePosition,
+                                   final Promise promise) {
+        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+
+        if (Objects.nonNull(drivingRoute)) {
+            drivingRoute.setPosition(polylinePosition);
+        } else {
+            promise.reject("ERROR", "noRouteWithSuchId");
+        }
+    }
+
+    public void getAdvancedPosition(final String routeId, final PolylinePosition polylinePosition,
+                                   final double distance,
+                                   final Promise promise) {
+        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+
+        final WritableMap writableMap = Arguments.createMap();
+        if (Objects.nonNull(drivingRoute)) {
+
+            PopulatorUtils.populatePositionJson(writableMap,
+                    PolylineUtils.advancePolylinePosition(drivingRoute.getGeometry(),
+                            polylinePosition, distance));
+            promise.resolve(writableMap);
+        } else {
+            promise.reject("ERROR", "noRouteWithSuchId");
+        }
+    }
 }

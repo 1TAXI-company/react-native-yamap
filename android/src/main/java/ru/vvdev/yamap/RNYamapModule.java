@@ -166,6 +166,31 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
         }));
     }
 
+    @ReactMethod
+    private void setReachedPosition(final ReadableMap map,
+                                    final Promise promise) {
+        runOnUiThread(new Thread(() -> {
+            final String routeId = map.getString("routeId");
+            final ReadableMap position1Map = map.getMap("position");
+            final PolylinePosition position = createPolylinePosition(map.getMap("position"));
+
+            routeManager.setReachedPosition(routeId, position, promise);
+        }));
+    }
+
+    @ReactMethod
+    private void getAdvancedPosition(final ReadableMap map,
+                                    final Promise promise) {
+        runOnUiThread(new Thread(() -> {
+            final String routeId = map.getString("routeId");
+            final ReadableMap position1Map = map.getMap("position");
+            final double distance = map.getDouble("distance");
+            final PolylinePosition position = createPolylinePosition(map.getMap("position"));
+
+            routeManager.getAdvancedPosition(routeId, position, distance, promise);
+        }));
+    }
+
 
     private PolylinePosition createPolylinePosition(final ReadableMap map) {
         return new PolylinePosition(map.getInt("segmentIndex"), map.getDouble("segmentPosition"));

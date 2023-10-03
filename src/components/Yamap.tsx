@@ -27,7 +27,7 @@ import {
   MapLoaded,
   YandexLogoPosition,
   YandexLogoPadding,
-  DistanceInfo, IsOnRoute, PolylinePosition, RoutePositionInfo
+  DistanceInfo, IsOnRoute, PolylinePosition, RoutePositionInfo, SetPositionDTO, AdvancePositionDTO
 } from '../interfaces';
 import { processColorProps } from '../utils';
 
@@ -130,6 +130,16 @@ export class YaMap extends React.Component<YaMapProps> {
   // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition
   public getRoutePositionInfo(routeId: String): Promise<RoutePositionInfo>  {
     return NativeYamapModule.getRoutePositionInfo(routeId);
+  }
+
+  //this function will set reached position for route with passed id
+  public setPosition(setPositionDTO: SetPositionDTO): Promise<number> {
+    return NativeYamapModule.setReachedPosition(setPositionDTO);
+  }
+
+  //this function will get reached position from route with passed id. Will add given distance and return advanced position
+  public getAdvancedPosition(advancePositionDTO: AdvancePositionDTO): Promise<number> {
+    return NativeYamapModule.getAdvancedPosition(advancePositionDTO);
   }
 
   public findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean,  callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {

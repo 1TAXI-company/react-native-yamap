@@ -106,6 +106,17 @@ export interface DistanceInfo {
   position2: Position;
 }
 
+export interface SetPositionDTO {
+  routeId: string;
+  position: Position;
+}
+
+export interface AdvancePositionDTO {
+  routeId: string;
+  position: Position;
+  distance: number;
+}
+
 export interface PolylinePosition {
   position: Position;
 }
