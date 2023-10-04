@@ -143,6 +143,41 @@ RCT_EXPORT_METHOD(getDistance:(id)json resolver:(RCTPromiseResolveBlock) resolve
     }
 }
 
+RCT_EXPORT_METHOD(getAdvancedPosition:(id)json resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
+    NSString *routeId = json[@"routeId"];
+
+    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
+
+    if (route != nil) {
+        YMKPolylinePosition *position = [self createPolylinePosition:json[@"position"]];
+
+        YMKPolylinePosition *advancedPosition = [YMKPolylineUtils advancePolylinePositionWithPolyline:[route geometry] position:position distance:[(NSNumber *)json[@"distance"] doubleValue]];
+
+        NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
+        [polylineJson setValue:[NSNumber numberWithDouble:advancedPosition.segmentIndex] forKey:@"segmentIndex"];
+        [polylineJson setValue:[NSNumber numberWithDouble:advancedPosition.segmentPosition] forKey:@"segmentPosition"];
+
+        resolve(polylineJson);
+    } else {
+        reject(@"ERROR", @"noRouteWithSuchId", nil);
+    }
+}
+
+RCT_EXPORT_METHOD(setReachedPosition:(id)json resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
+    NSString *routeId = json[@"routeId"];
+
+    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
+
+    if (route != nil) {
+        YMKPolylinePosition *position = [self createPolylinePosition:json[@"position"]];
+
+        [route setPosition:position];
+    } else {
+        reject(@"ERROR", @"noRouteWithSuchId", nil);
+    }
+}
+
+
 - (YMKPolylinePosition*)createPolylinePosition:(NSDictionary*)positionMap {
     NSUInteger segmentIndex = [[positionMap valueForKey:@"segmentIndex"] unsignedIntegerValue];
     double segmentPosition = [[positionMap valueForKey:@"segmentPosition"] doubleValue];
