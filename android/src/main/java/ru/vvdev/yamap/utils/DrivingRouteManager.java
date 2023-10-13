@@ -110,6 +110,7 @@ public class DrivingRouteManager {
 
         if (Objects.nonNull(drivingRoute)) {
             drivingRoute.setPosition(polylinePosition);
+            promise.resolve("success");
         } else {
             promise.reject("ERROR", "noRouteWithSuchId");
         }
