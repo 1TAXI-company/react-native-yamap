@@ -1,4 +1,4 @@
-import { BoundingBox, Point } from './interfaces';
+import {BoundingBox, DistanceInfo, Point} from './interfaces';
 import { NativeModules } from 'react-native';
 
 const { YamapSuggests } = NativeModules;
@@ -39,6 +39,17 @@ export type SuggestOptions = {
   suggestTypes?: SuggestTypes[];
 };
 
+export type GeocodeOptions = {
+  zoom: number;
+  point: Point;
+}
+
+export type GeocodeItem ={
+  name?: string;
+  descriptionText?: string;
+  aref?: string[];
+}
+
 type SuggestFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggest>>;
 const suggest: SuggestFetcher = (query, options) => {
   if (options) {
@@ -77,11 +88,17 @@ const getCoordsFromSuggest: LatLonGetter = (suggest) => {
   return { lat, lon };
 };
 
+type GeocodeFetcher = (geocodeOptions: GeocodeOptions) => Promise<Array<GeocodeItem>>;
+const geocode: GeocodeFetcher = async (geocodeOptions) => {
+  return YamapSuggests.geocode(geocodeOptions);
+}
+
 const Suggest = {
   suggest,
   suggestWithCoords,
   reset,
-  getCoordsFromSuggest
+  getCoordsFromSuggest,
+  geocode
 };
 
 export default Suggest;

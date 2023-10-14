@@ -5,15 +5,25 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableType;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.google.android.gms.common.util.CollectionUtils;
+import com.yandex.mapkit.GeoObject;
+import com.yandex.mapkit.GeoObjectCollection;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.search.Response;
 import com.yandex.mapkit.search.SearchFactory;
 import com.yandex.mapkit.search.SearchManager;
 import com.yandex.mapkit.search.SearchManagerType;
+import com.yandex.mapkit.search.SearchOptions;
 import com.yandex.mapkit.search.SearchType;
+import com.yandex.mapkit.search.Session;
 import com.yandex.mapkit.search.SuggestItem;
 import com.yandex.mapkit.search.SuggestOptions;
 import com.yandex.mapkit.search.SuggestSession;
@@ -22,6 +32,7 @@ import com.yandex.runtime.Error;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import ru.vvdev.yamap.utils.Callback;
 
@@ -29,6 +40,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
     private SearchManager searchManager;
     private SuggestOptions suggestOptions = new SuggestOptions();
     private SuggestSession suggestSession;
+
+    private SearchOptions searchOptions;
 
     /**
      * Для Яндекса нужно указать географическую область поиска. В дефолтном варианте мы не знаем какие
@@ -43,6 +56,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
         SearchFactory.initialize(context);
         searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
         suggestOptions.setSuggestTypes(SearchType.GEO.value);
+        searchOptions = new SearchOptions();
+        searchOptions.setSearchTypes(SearchType.GEO.value);
     }
 
     private void suggestHandler(final String text, final SuggestOptions options, final BoundingBox boundingBox, final Callback<List<MapSuggestItem>> onSuccess, final Callback<Throwable> onError) {
@@ -81,6 +96,45 @@ public class YandexMapSuggestClient implements MapSuggestClient {
                     }
                 }
         );
+    }
+
+    @Override
+    public void suggest(final Point point, final Integer zoom,
+                        final Promise promise) {
+        searchManager.submit(point, zoom, searchOptions, new Session.SearchListener() {
+            @Override
+            public void onSearchResponse(@NonNull Response response) {
+                final List<GeoObjectCollection.Item> items = response.getCollection().getChildren();
+
+                final WritableArray array = Arguments.createArray();
+                if (!CollectionUtils.isEmpty(items)) {
+                    for (GeoObjectCollection.Item item : items) {
+                        final GeoObject obj = item.getObj();
+                        if (Objects.nonNull(obj)) {
+                            final WritableMap map = Arguments.createMap();
+
+                            map.putString("name", obj.getName());
+                            map.putString("descriptionText", obj.getDescriptionText());
+                            final List<String> arefList = obj.getAref();
+                            final WritableArray writableArray = Arguments.createArray();
+                            for (String aref : arefList) {
+                                writableArray.pushString(aref);
+                            }
+                            map.putArray("aref", writableArray);
+
+                            array.pushMap(map);
+                        }
+                    }
+                }
+
+                promise.resolve(array);
+            }
+
+            @Override
+            public void onSearchError(@NonNull Error error) {
+                promise.reject("Error", error.toString());
+            }
+        });
     }
 
     private Point mapPoint(final ReadableMap readableMap, final String pointKey) {

@@ -9,8 +9,10 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.yandex.mapkit.geometry.Point;
 
 import java.util.List;
+import java.util.Objects;
 
 import ru.vvdev.yamap.utils.Callback;
 
@@ -94,6 +96,25 @@ public class RNYandexSuggestModule extends ReactContextBaseJavaModule {
             @Override
             public void run() {
                 getSuggestClient(getReactApplicationContext()).resetSuggest();
+            }
+        });
+    }
+
+    @ReactMethod
+    public void geocode(final ReadableMap options, final Promise promise) {
+        final Integer zoom = options.getInt("zoom");
+        final ReadableMap pointJson = options.getMap("point");
+        if (Objects.isNull(zoom) || Objects.isNull(pointJson)) {
+            promise.reject(ERR_NO_REQUEST_ARG, "suggest request: text arg is not provided");
+        }
+
+        final Point point = new Point(pointJson.getDouble("lat"),
+                pointJson.getDouble("lon"));
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getSuggestClient(getReactApplicationContext()).suggest(point, zoom, promise);
             }
         });
     }
