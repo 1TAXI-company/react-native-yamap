@@ -27,7 +27,13 @@ import {
   MapLoaded,
   YandexLogoPosition,
   YandexLogoPadding,
-  DistanceInfo, IsOnRoute, PolylinePosition, RoutePositionInfo, SetPositionDTO, AdvancePositionDTO
+  DistanceInfo,
+  IsOnRoute,
+  PolylinePosition,
+  RoutePositionInfo,
+  SetPositionDTO,
+  AdvancePositionDTO,
+  GetClosestPositionBetweenPointsDTO, GetClosestPositionDTO
 } from '../interfaces';
 import { processColorProps } from '../utils';
 
@@ -140,6 +146,16 @@ export class YaMap extends React.Component<YaMapProps> {
   //this function will get reached position from route with passed id. Will add given distance and return advanced position
   public getAdvancedPosition(advancePositionDTO: AdvancePositionDTO): Promise<number> {
     return NativeYamapModule.getAdvancedPosition(advancePositionDTO);
+  }
+
+  //https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/geometry/geo/PolylineIndex
+  public getClosestPosition(getClosestPositionDTO: GetClosestPositionDTO): Promise<PolylinePosition> {
+    return NativeYamapModule.getClosestPosition(getClosestPositionDTO);
+  }
+
+  //https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/geometry/geo/PolylineIndex
+  public getClosestPositionBetweenPoints(getClosestPositionBetweenPointsDTO: GetClosestPositionBetweenPointsDTO): Promise<PolylinePosition> {
+    return NativeYamapModule.getClosestPositionBetweenPoints(getClosestPositionBetweenPointsDTO);
   }
 
   public findRoutes(points: Point[], vehicles: Vehicles[], needNavigationInfo: boolean,  callback: (event: RoutesFoundEvent<DrivingInfo | MasstransitInfo>) => void) {

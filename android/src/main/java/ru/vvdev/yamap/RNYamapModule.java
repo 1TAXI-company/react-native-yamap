@@ -9,6 +9,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.yandex.mapkit.MapKitFactory;
+import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.PolylinePosition;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.runtime.i18n.I18nManagerFactory;
@@ -171,7 +172,6 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
                                     final Promise promise) {
         runOnUiThread(new Thread(() -> {
             final String routeId = map.getString("routeId");
-            final ReadableMap position1Map = map.getMap("position");
             final PolylinePosition position = createPolylinePosition(map.getMap("position"));
 
             routeManager.setReachedPosition(routeId, position, promise);
@@ -180,10 +180,9 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     private void getAdvancedPosition(final ReadableMap map,
-                                    final Promise promise) {
+                                     final Promise promise) {
         runOnUiThread(new Thread(() -> {
             final String routeId = map.getString("routeId");
-            final ReadableMap position1Map = map.getMap("position");
             final double distance = map.getDouble("distance");
             final PolylinePosition position = createPolylinePosition(map.getMap("position"));
 
@@ -191,9 +190,41 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
         }));
     }
 
+    @ReactMethod
+    private void getClosestPosition(final ReadableMap map,
+                                    final Promise promise) {
+        runOnUiThread(new Thread(() -> {
+            final String routeId = map.getString("routeId");
+            final double maxLocationBias = map.getDouble("maxLocationBias");
+            final String priority = map.getString("priority");
+            final Point point = createPoint(map.getMap("point"));
+
+            routeManager.getClosestPosition(routeId, point, priority, maxLocationBias, promise);
+        }));
+    }
+
+    @ReactMethod
+    private void getClosestPositionBetweenPoints(final ReadableMap map,
+                                                 final Promise promise) {
+        runOnUiThread(new Thread(() -> {
+            final String routeId = map.getString("routeId");
+            final double maxLocationBias = map.getDouble("maxLocationBias");
+            final Point point = createPoint(map.getMap("point"));
+            final PolylinePosition positionFrom = createPolylinePosition(map.getMap("positionFrom"));
+            final PolylinePosition positionTo = createPolylinePosition(map.getMap("positionTo"));
+
+            routeManager.getClosestPositionBetweenPoints(routeId, point, positionFrom,
+                    positionTo, maxLocationBias, promise);
+        }));
+    }
+
 
     private PolylinePosition createPolylinePosition(final ReadableMap map) {
         return new PolylinePosition(map.getInt("segmentIndex"), map.getDouble("segmentPosition"));
+    }
+
+    private Point createPoint(final ReadableMap map) {
+        return new Point(map.getDouble("lat"), map.getDouble("lon"));
     }
 
     private static void emitDeviceEvent(String eventName, @Nullable WritableMap eventData) {

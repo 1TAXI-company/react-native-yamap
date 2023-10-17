@@ -117,6 +117,21 @@ export interface AdvancePositionDTO {
   distance: number;
 }
 
+export interface GetClosestPositionCommonDTO {
+  routeId: string;
+  point: Point;
+  maxLocationBias: number;
+}
+
+export interface GetClosestPositionDTO extends GetClosestPositionCommonDTO{
+  priority: string;
+}
+
+export interface GetClosestPositionBetweenPointsDTO extends GetClosestPositionCommonDTO {
+  positionFrom: Position;
+  positionTo: Position;
+}
+
 export interface PolylinePosition {
   position: Position;
 }
