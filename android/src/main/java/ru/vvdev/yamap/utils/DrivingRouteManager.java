@@ -4,7 +4,9 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.WritableMap;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
+import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.PolylinePosition;
+import com.yandex.mapkit.geometry.geo.PolylineIndex;
 import com.yandex.mapkit.geometry.geo.PolylineUtils;
 import com.yandex.mapkit.navigation.RoutePosition;
 
@@ -127,6 +129,60 @@ public class DrivingRouteManager {
             PopulatorUtils.populatePositionJson(writableMap,
                     PolylineUtils.advancePolylinePosition(drivingRoute.getGeometry(),
                             polylinePosition, distance));
+            promise.resolve(writableMap);
+        } else {
+            promise.reject("ERROR", "noRouteWithSuchId");
+        }
+    }
+
+
+    public void getClosestPosition(final String routeId,
+                                       final Point point,
+                                       final String priority,
+                                       final double maxLocationBias,
+                                       final Promise promise) {
+        final DrivingRoute drivingRoute = getRoute(routeId);
+
+        if (Objects.nonNull(drivingRoute)) {
+            PolylineIndex.Priority priorityEnum = "START_POINT".equals(priority) ?
+                    PolylineIndex.Priority.CLOSEST_TO_START : PolylineIndex.Priority.CLOSEST_TO_RAW_POINT ;
+            final PolylinePosition position = PolylineUtils
+                    .createPolylineIndex(drivingRoute.getGeometry())
+                    .closestPolylinePosition(point, priorityEnum,
+                            maxLocationBias);
+
+            final WritableMap writableMap = Arguments.createMap();
+
+            if (Objects.nonNull(position)) {
+                PopulatorUtils.populatePositionJson(writableMap, position);
+            }
+
+            promise.resolve(writableMap);
+        } else {
+            promise.reject("ERROR", "noRouteWithSuchId");
+        }
+    }
+
+    public void getClosestPositionBetweenPoints(final String routeId,
+                                               final Point point,
+                                               final PolylinePosition positionFrom,
+                                               final PolylinePosition positionTo,
+                                               double maxLocationBias,
+                                               final Promise promise) {
+        final DrivingRoute drivingRoute = getRoute(routeId);
+
+        if (Objects.nonNull(drivingRoute)) {
+            final PolylinePosition position = PolylineUtils
+                    .createPolylineIndex(drivingRoute.getGeometry())
+                    .closestPolylinePosition(point, positionFrom, positionTo,
+                            maxLocationBias);
+
+            final WritableMap writableMap = Arguments.createMap();
+
+            if (Objects.nonNull(position)) {
+                PopulatorUtils.populatePositionJson(writableMap, position);
+            }
+
             promise.resolve(writableMap);
         } else {
             promise.reject("ERROR", "noRouteWithSuchId");

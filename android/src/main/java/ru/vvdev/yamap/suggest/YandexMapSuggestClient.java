@@ -16,6 +16,7 @@ import com.google.android.gms.common.util.CollectionUtils;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.GeoObjectCollection;
 import com.yandex.mapkit.geometry.BoundingBox;
+import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.search.Response;
 import com.yandex.mapkit.search.SearchFactory;
@@ -115,12 +116,21 @@ public class YandexMapSuggestClient implements MapSuggestClient {
 
                             map.putString("name", obj.getName());
                             map.putString("descriptionText", obj.getDescriptionText());
-                            final List<String> arefList = obj.getAref();
+
+                            final List<Geometry> geometries = obj.getGeometry();
                             final WritableArray writableArray = Arguments.createArray();
-                            for (String aref : arefList) {
-                                writableArray.pushString(aref);
+                            for (Geometry geometry : geometries) {
+                                if (Objects.nonNull(geometry.getPoint())) {
+                                    final Point geometryPoint = geometry.getPoint();
+                                    WritableMap writableMap = Arguments.createMap();
+
+                                    writableMap.putDouble("lat", geometryPoint.getLatitude());
+                                    writableMap.putDouble("lon", geometryPoint.getLongitude());
+
+                                    writableArray.pushMap(writableMap);
+                                }
                             }
-                            map.putArray("aref", writableArray);
+                            map.putArray("geometries", writableArray);
 
                             array.pushMap(map);
                         }
