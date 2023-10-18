@@ -172,6 +172,7 @@ RCT_EXPORT_METHOD(setReachedPosition:(id)json resolver:(RCTPromiseResolveBlock) 
         YMKPolylinePosition *position = [self createPolylinePosition:json[@"position"]];
 
         [route setPosition:position];
+        resolve(@"success");
     } else {
         reject(@"ERROR", @"noRouteWithSuchId", nil);
     }
