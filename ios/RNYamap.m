@@ -35,8 +35,8 @@ static NSString * _selectedMarkerIcon;
 }
 
 RCT_EXPORT_METHOD(init: (NSString *) apiKey
-          resolver:(RCTPromiseResolveBlock)resolve
-          rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
         [self initWithKey: apiKey];
         resolve(nil);
@@ -95,8 +95,7 @@ RCT_EXPORT_METHOD(getReachedPosition:(nonnull NSString *)routeId resolver:(RCTPr
         YMKPolylinePosition *polyline = [route position];
 
         NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
-        [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentIndex] forKey:@"segmentIndex"];
-        [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentPosition] forKey:@"segmentPosition"];
+        [polylineJson setValue:[self createMapFromPolyline:polyline] forKey:@"position"];
 
         resolve(polylineJson);
     } else {
@@ -154,8 +153,7 @@ RCT_EXPORT_METHOD(getAdvancedPosition:(id)json resolver:(RCTPromiseResolveBlock)
         YMKPolylinePosition *advancedPosition = [YMKPolylineUtils advancePolylinePositionWithPolyline:[route geometry] position:position distance:[(NSNumber *)json[@"distance"] doubleValue]];
 
         NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
-        [polylineJson setValue:[NSNumber numberWithDouble:advancedPosition.segmentIndex] forKey:@"segmentIndex"];
-        [polylineJson setValue:[NSNumber numberWithDouble:advancedPosition.segmentPosition] forKey:@"segmentPosition"];
+        [polylineJson setValue:[self createMapFromPolyline:position] forKey:@"position"];
 
         resolve(polylineJson);
     } else {
@@ -178,12 +176,86 @@ RCT_EXPORT_METHOD(setReachedPosition:(id)json resolver:(RCTPromiseResolveBlock) 
     }
 }
 
+RCT_EXPORT_METHOD(getClosestPosition:(NSDictionary *)getClosestPositionDTO resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
+    NSString *routeId = getClosestPositionDTO[@"routeId"];
+
+    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
+
+    if (route != nil) {
+        YMKPoint *point = [self createPoint:getClosestPositionDTO[@"point"]];
+        double maxLocationBias = [getClosestPositionDTO[@"maxLocationBias"] doubleValue];
+        NSString *priorityString = getClosestPositionDTO[@"priority"];
+
+        YMKPolylineIndexPriority priority;
+
+        if ([priorityString isEqualToString:@"START_POINT"]) {
+            priority = YMKPolylineIndexPriorityClosestToStart;
+        } else {
+            priority = YMKPolylineIndexPriorityClosestToRawPoint;
+        }
+
+        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:[route geometry]];
+        YMKPolylinePosition *position = [index closestPolylinePositionWithPoint:point priority:priority maxLocationBias:maxLocationBias];
+
+        NSMutableDictionary *map = [[NSMutableDictionary alloc] init];
+
+        if (position != nil) {
+            [map setValue:[self createMapFromPolyline:position] forKey:@"position"];
+        }
+
+        resolve(map);
+    } else {
+        reject(@"ERROR", @"noRouteWithSuchId", nil);
+    }
+}
+
+RCT_EXPORT_METHOD(getClosestPositionBetweenPoints:(NSDictionary *)getClosestPositionBetweenPointsDTO resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
+    NSString *routeId = getClosestPositionBetweenPointsDTO[@"routeId"];
+
+    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
+
+    if (route != nil) {
+        YMKPoint *point = [self createPoint:getClosestPositionBetweenPointsDTO[@"point"]];
+        double maxLocationBias = [getClosestPositionBetweenPointsDTO[@"maxLocationBias"] doubleValue];
+        YMKPolylinePosition *positionFrom = [self createPolylinePosition:getClosestPositionBetweenPointsDTO[@"positionFrom"]];
+        YMKPolylinePosition *positionTo = [self createPolylinePosition:getClosestPositionBetweenPointsDTO[@"positionTo"]];
+
+        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:[route geometry]];
+        YMKPolylinePosition *position = [index closestPolylinePositionWithPoint:point positionFrom:positionFrom positionTo:positionTo maxLocationBias:maxLocationBias];
+
+        NSMutableDictionary *map = [[NSMutableDictionary alloc] init];
+
+        if (position != nil) {
+            [map setValue:[self createMapFromPolyline:position] forKey:@"position"];
+        }
+
+        resolve(map);
+    } else {
+        reject(@"ERROR", @"noRouteWithSuchId", nil);
+    }
+}
+
+- (NSDictionary*)createMapFromPolyline:(YMKPolylinePosition*)polyline {
+    NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
+    [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentIndex] forKey:@"segmentIndex"];
+    [polylineJson setValue:[NSNumber numberWithDouble:polyline.segmentPosition] forKey:@"segmentPosition"];
+    return polylineJson;
+}
+
+
 
 - (YMKPolylinePosition*)createPolylinePosition:(NSDictionary*)positionMap {
     NSUInteger segmentIndex = [[positionMap valueForKey:@"segmentIndex"] unsignedIntegerValue];
     double segmentPosition = [[positionMap valueForKey:@"segmentPosition"] doubleValue];
 
     return [YMKPolylinePosition polylinePositionWithSegmentIndex:segmentIndex segmentPosition:segmentPosition];
+}
+
+- (YMKPoint*)createPoint:(NSDictionary*)pointMap {
+    double lat = [[pointMap valueForKey:@"lat"] doubleValue];
+    double lon = [[pointMap valueForKey:@"lon"] doubleValue];
+
+    return [YMKPoint pointWithLatitude:lat longitude:lon];
 }
 
 RCT_EXPORT_MODULE()
