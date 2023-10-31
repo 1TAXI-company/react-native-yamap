@@ -178,14 +178,14 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             @Override
             public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
                 WritableArray jsonRoutes = Arguments.createArray();
-                routeManager.cleatExistingRoutes();
+                routeManager.removeUnusedRoutes();
                 for (int i = 0; i < routes.size(); ++i) {
                     DrivingRoute drivingRoute = routes.get(i);
 
                     WritableMap jsonRoute = Arguments.createMap();
                     final String id = getRouteId(drivingRoute) ;
                     jsonRoute.putString("id", id);
-                    routeManager.saveRoute(drivingRoute, id);
+                    routeManager.saveRoute(drivingRoute);
 
                     drivingRoutePopulator.populateMandatoryData(jsonRoute, drivingRoute);
 

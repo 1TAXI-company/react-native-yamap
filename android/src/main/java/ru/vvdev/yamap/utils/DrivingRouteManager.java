@@ -10,11 +10,13 @@ import com.yandex.mapkit.geometry.geo.PolylineIndex;
 import com.yandex.mapkit.geometry.geo.PolylineUtils;
 import com.yandex.mapkit.navigation.RoutePosition;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class DrivingRouteManager {
-    private static final HashMap<String, DrivingRoute> existingRoutes = new HashMap<>();
+    private static final int NUMBER_OF_STORED_ROUTES = 10;
+    private static List<DrivingRoute> existingRoutes = new ArrayList<>();
 
     private static final DrivingRouteManager instance = new DrivingRouteManager();
 
@@ -26,16 +28,29 @@ public class DrivingRouteManager {
         return java.util.UUID.randomUUID().toString();
     }
 
-    public void saveRoute(DrivingRoute route, String id) {
-        existingRoutes.put(id, route);
+    public void saveRoute(DrivingRoute route) {
+        existingRoutes.add(route);
     }
 
     public DrivingRoute getRoute(String id) {
-        return existingRoutes.get(id);
+        for (DrivingRoute drivingRoute : existingRoutes) {
+            if (drivingRoute.getRouteId().equals(id)) {
+                return drivingRoute;
+            }
+        }
+        return null;
     }
 
-    public void cleatExistingRoutes() {
-        existingRoutes.clear();
+    public int getNumberOfRoutes() {
+        return existingRoutes.size();
+    }
+
+    public void removeUnusedRoutes() {
+        if (existingRoutes.size() > NUMBER_OF_STORED_ROUTES) {
+            int elementsToRemove = existingRoutes.size() - NUMBER_OF_STORED_ROUTES;
+
+            existingRoutes = existingRoutes.subList(elementsToRemove, existingRoutes.size());
+        }
     }
 
     public static DrivingRouteManager getInstance() {
@@ -44,7 +59,7 @@ public class DrivingRouteManager {
 
     public float getDistance(final String routeId, final PolylinePosition position1,
                              final PolylinePosition position2) {
-        final DrivingRoute route = existingRoutes.get(routeId);
+        final DrivingRoute route = getRoute(routeId);
 
         if (Objects.isNull(route) || Objects.isNull(position2)) {
             return -1.f;
@@ -60,7 +75,7 @@ public class DrivingRouteManager {
     }
 
     public RoutePosition getRoutePosition(final String routeId)  {
-        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+        final DrivingRoute drivingRoute = getRoute(routeId);
         return Objects.nonNull(drivingRoute) ? drivingRoute.getRoutePosition() : null;
     }
 
@@ -94,7 +109,7 @@ public class DrivingRouteManager {
     }
 
     public void getReachedPosition(final String routeId, final Promise promise) {
-        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+        final DrivingRoute drivingRoute = getRoute(routeId);
 
         final WritableMap writableMap = Arguments.createMap();
 
@@ -108,7 +123,7 @@ public class DrivingRouteManager {
 
     public void setReachedPosition(final String routeId, final PolylinePosition polylinePosition,
                                    final Promise promise) {
-        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+        final DrivingRoute drivingRoute = getRoute(routeId);
 
         if (Objects.nonNull(drivingRoute)) {
             drivingRoute.setPosition(polylinePosition);
@@ -121,7 +136,7 @@ public class DrivingRouteManager {
     public void getAdvancedPosition(final String routeId, final PolylinePosition polylinePosition,
                                    final double distance,
                                    final Promise promise) {
-        final DrivingRoute drivingRoute = existingRoutes.get(routeId);
+        final DrivingRoute drivingRoute = getRoute(routeId);
 
         final WritableMap writableMap = Arguments.createMap();
         if (Objects.nonNull(drivingRoute)) {
