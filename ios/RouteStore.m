@@ -7,23 +7,32 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[RouteStore alloc] init];
-        sharedInstance.routeDictionary = [NSMutableDictionary dictionary];
+        sharedInstance.routeDictionary = [NSMutableArray array];
     });
     return sharedInstance;
 }
 
-- (void)addElement:(YMKDrivingRoute *)route forKey:(NSString *)key {
-    if (route && key) {
-        self.routeDictionary[key] = route;
+- (void)addElement:(YMKDrivingRoute *)route {
+    if (route) {
+        [self.routeDictionary addObject:route];
     }
 }
 
 - (YMKDrivingRoute *)accessRouteForKey:(NSString *)key {
-    return self.routeDictionary[key];
+    for (YMKDrivingRoute *route in self.routeDictionary) {
+        if ([[route routeId] isEqualToString:key]) {
+            return route;
+        }
+    }
+    return nil;
 }
 
 - (void)clear {
-    [self.routeDictionary removeAllObjects];
+    if (self.routeDictionary.count > 10) {
+        NSUInteger elementsToRemove = self.routeDictionary.count - 10; // Calculate the number of elements to remove from the beginning
+        NSRange range = NSMakeRange(0, elementsToRemove); // Create a range to remove elements from the beginning
+        [self.routeDictionary removeObjectsInRange:range]; // Remove elements from the beginning of the array
+    }
 }
 
 @end

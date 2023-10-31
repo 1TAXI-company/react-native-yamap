@@ -3,10 +3,10 @@
 
 @interface RouteStore : NSObject
 
-@property (nonatomic, strong) NSMutableDictionary *routeDictionary;
+@property (nonatomic, strong) NSMutableArray *routeDictionary;
 
 + (instancetype)sharedInstance;
-- (void)addElement:(YMKDrivingRoute *)route forKey:(NSString *)key;
+- (void)addElement:(YMKDrivingRoute *)route;
 - (YMKDrivingRoute *)accessRouteForKey:(NSString *)key;
 - (void)clear;
 

@@ -257,7 +257,7 @@
                 YMKDrivingRoute *_route = [routes objectAtIndex:i];
 
                 NSString *routeId = _route.routeId != nil && _route.routeId.length > 0 ? _route.routeId : [NSString stringWithFormat:@"%d", i];
-                [[RouteStore sharedInstance] addElement:_route forKey:routeId];
+                [[RouteStore sharedInstance] addElement:_route];
                 NSMutableDictionary *jsonRoute = [[NSMutableDictionary alloc] init];
                 [jsonRoute setValue:routeId forKey:@"id"];
 
