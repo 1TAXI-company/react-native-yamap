@@ -47,7 +47,7 @@ export type GeocodeOptions = {
 export type GeocodeItem ={
   name?: string;
   descriptionText?: string;
-  aref?: string[];
+  geometries?: Point[];
 }
 
 type SuggestFetcher = (query: string, options?: SuggestOptions) => Promise<Array<YamapSuggest>>;
