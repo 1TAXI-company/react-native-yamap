@@ -140,6 +140,12 @@ RCT_EXPORT_METHOD(suggest:(nonnull NSString*) searchQuery resolver:(RCTPromiseRe
 })
 
 RCT_EXPORT_METHOD(geocode:(NSDictionary *)geocodeOptions resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject {
+    if (!searchManager) {
+        runOnMainQueueWithoutDeadlocking(^{
+            self->searchManager = [[YMKSearch sharedInstance] createSearchManagerWithSearchManagerType:YMKSearchSearchManagerTypeOnline];
+        });
+    }
+
     @try {
         NSNumber *zoom = geocodeOptions[@"zoom"];
         NSError *pointError;
