@@ -44,6 +44,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
 
     private SearchOptions searchOptions;
 
+    private Session session;
+
     /**
      * Для Яндекса нужно указать географическую область поиска. В дефолтном варианте мы не знаем какие
      * границы для каждого конкретного города, поэтому поиск осуществляется по всему миру.
@@ -102,7 +104,7 @@ public class YandexMapSuggestClient implements MapSuggestClient {
     @Override
     public void suggest(final Point point, final Integer zoom,
                         final Promise promise) {
-        searchManager.submit(point, zoom, searchOptions, new Session.SearchListener() {
+        session = searchManager.submit(point, zoom, searchOptions, new Session.SearchListener() {
             @Override
             public void onSearchResponse(@NonNull Response response) {
                 final List<GeoObjectCollection.Item> items = response.getCollection().getChildren();
