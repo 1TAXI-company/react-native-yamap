@@ -118,7 +118,7 @@ export interface AdvancePositionDTO {
 }
 
 export interface GetClosestPositionCommonDTO {
-  routeId: string;
+  routeId?: string;
   point: Point;
   maxLocationBias: number;
 }

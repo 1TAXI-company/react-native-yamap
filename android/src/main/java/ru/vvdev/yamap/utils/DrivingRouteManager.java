@@ -5,6 +5,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.WritableMap;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.geometry.PolylinePosition;
 import com.yandex.mapkit.geometry.geo.PolylineIndex;
 import com.yandex.mapkit.geometry.geo.PolylineUtils;
@@ -17,6 +18,8 @@ import java.util.Objects;
 public class DrivingRouteManager {
     private static final int NUMBER_OF_STORED_ROUTES = 10;
     private static List<DrivingRoute> existingRoutes = new ArrayList<>();
+
+    private static Polyline savedPolyline;
 
     private static final DrivingRouteManager instance = new DrivingRouteManager();
 
@@ -36,6 +39,15 @@ public class DrivingRouteManager {
         for (DrivingRoute drivingRoute : existingRoutes) {
             if (drivingRoute.getRouteId().equals(id)) {
                 return drivingRoute;
+            }
+        }
+        return null;
+    }
+
+    public Polyline getRoutePolyline(String id) {
+        for (DrivingRoute drivingRoute : existingRoutes) {
+            if (drivingRoute.getRouteId().equals(id)) {
+                return drivingRoute.getGeometry();
             }
         }
         return null;
@@ -156,13 +168,18 @@ public class DrivingRouteManager {
                                        final String priority,
                                        final double maxLocationBias,
                                        final Promise promise) {
-        final DrivingRoute drivingRoute = getRoute(routeId);
+        Polyline polyline;
+        if (Objects.nonNull(routeId)) {
+            polyline = getRoutePolyline(routeId);
+        } else {
+            polyline = savedPolyline;
+        }
 
-        if (Objects.nonNull(drivingRoute)) {
+        if (Objects.nonNull(polyline)) {
             PolylineIndex.Priority priorityEnum = "START_POINT".equals(priority) ?
                     PolylineIndex.Priority.CLOSEST_TO_START : PolylineIndex.Priority.CLOSEST_TO_RAW_POINT ;
             final PolylinePosition position = PolylineUtils
-                    .createPolylineIndex(drivingRoute.getGeometry())
+                    .createPolylineIndex(polyline)
                     .closestPolylinePosition(point, priorityEnum,
                             maxLocationBias);
 
@@ -174,7 +191,7 @@ public class DrivingRouteManager {
 
             promise.resolve(writableMap);
         } else {
-            promise.reject("ERROR", "noRouteWithSuchId");
+            promise.reject("ERROR", getNoPolylineErrorMessage(routeId));
         }
     }
 
@@ -184,11 +201,16 @@ public class DrivingRouteManager {
                                                final PolylinePosition positionTo,
                                                double maxLocationBias,
                                                final Promise promise) {
-        final DrivingRoute drivingRoute = getRoute(routeId);
+        Polyline polyline;
+        if (Objects.nonNull(routeId)) {
+            polyline = getRoutePolyline(routeId);
+        } else {
+            polyline = savedPolyline;
+        }
 
-        if (Objects.nonNull(drivingRoute)) {
+        if (Objects.nonNull(polyline)) {
             final PolylinePosition position = PolylineUtils
-                    .createPolylineIndex(drivingRoute.getGeometry())
+                    .createPolylineIndex(polyline)
                     .closestPolylinePosition(point, positionFrom, positionTo,
                             maxLocationBias);
 
@@ -200,7 +222,15 @@ public class DrivingRouteManager {
 
             promise.resolve(writableMap);
         } else {
-            promise.reject("ERROR", "noRouteWithSuchId");
+            promise.reject("ERROR", getNoPolylineErrorMessage(routeId));
         }
+    }
+
+    private String getNoPolylineErrorMessage(final String routeId) {
+        return Objects.isNull(routeId) ? "noPolyline" : "noRouteWithSuchId";
+    }
+
+    public void savePolyline(final Polyline polyline) {
+        savedPolyline = polyline;
     }
 }

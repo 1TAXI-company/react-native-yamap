@@ -17,10 +17,9 @@ export interface PolylineProps {
   children?: undefined;
   arrow?: Arrow;
   gradientInfo?: GradientInfo;
-
   turnRadius?: number
-
   hide?: HideSegment[];
+  save?: boolean;
 }
 
 const NativePolylineComponent = requireNativeComponent<PolylineProps>('YamapPolyline');

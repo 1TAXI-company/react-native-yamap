@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
+import ru.vvdev.yamap.utils.DrivingRouteManager;
 import ru.vvdev.yamap.utils.PopulatorUtils;
 import ru.vvdev.yamap.view.YamapPolyline;
 import ru.vvdev.yamap.view.dto.ArrowDto;
@@ -118,6 +119,13 @@ public class YamapPolylineManager extends ViewGroupManager<YamapPolyline> {
     @ReactProp(name = "turnRadius")
     public void setTurnRadious(View view, float color) {
         castToPolylineView(view).setTurnRadius(color);
+    }
+
+    @ReactProp(name = "save")
+    public void savePolyline(View view, boolean save) {
+        if (save) {
+            DrivingRouteManager.getInstance().savePolyline(castToPolylineView(view).polyline);
+        }
     }
 
     @ReactProp(name = "arrow")
