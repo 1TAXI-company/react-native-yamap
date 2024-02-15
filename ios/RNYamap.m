@@ -178,10 +178,14 @@ RCT_EXPORT_METHOD(setReachedPosition:(id)json resolver:(RCTPromiseResolveBlock) 
 
 RCT_EXPORT_METHOD(getClosestPosition:(NSDictionary *)getClosestPositionDTO resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
     NSString *routeId = getClosestPositionDTO[@"routeId"];
+    YMKPolyline *polyline;
+    if (routeId != nil) {
+        polyline = [[RouteStore sharedInstance] accessRoutePolylineForKey:routeId];
+    } else {
+        polyline = [[RouteStore sharedInstance] getPolyline];
+    }
 
-    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
-
-    if (route != nil) {
+    if (polyline != nil) {
         YMKPoint *point = [self createPoint:getClosestPositionDTO[@"point"]];
         double maxLocationBias = [getClosestPositionDTO[@"maxLocationBias"] doubleValue];
         NSString *priorityString = getClosestPositionDTO[@"priority"];
@@ -194,7 +198,7 @@ RCT_EXPORT_METHOD(getClosestPosition:(NSDictionary *)getClosestPositionDTO resol
             priority = YMKPolylineIndexPriorityClosestToRawPoint;
         }
 
-        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:[route geometry]];
+        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:polyline];
         YMKPolylinePosition *position = [index closestPolylinePositionWithPoint:point priority:priority maxLocationBias:maxLocationBias];
 
         NSMutableDictionary *map = [[NSMutableDictionary alloc] init];
@@ -211,16 +215,20 @@ RCT_EXPORT_METHOD(getClosestPosition:(NSDictionary *)getClosestPositionDTO resol
 
 RCT_EXPORT_METHOD(getClosestPositionBetweenPoints:(NSDictionary *)getClosestPositionBetweenPointsDTO resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
     NSString *routeId = getClosestPositionBetweenPointsDTO[@"routeId"];
+    YMKPolyline *polyline;
+    if (routeId != nil) {
+        polyline = [[RouteStore sharedInstance] accessRoutePolylineForKey:routeId];
+    } else {
+        polyline = [[RouteStore sharedInstance] getPolyline];
+    }
 
-    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
-
-    if (route != nil) {
+    if (polyline != nil) {
         YMKPoint *point = [self createPoint:getClosestPositionBetweenPointsDTO[@"point"]];
         double maxLocationBias = [getClosestPositionBetweenPointsDTO[@"maxLocationBias"] doubleValue];
         YMKPolylinePosition *positionFrom = [self createPolylinePosition:getClosestPositionBetweenPointsDTO[@"positionFrom"]];
         YMKPolylinePosition *positionTo = [self createPolylinePosition:getClosestPositionBetweenPointsDTO[@"positionTo"]];
 
-        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:[route geometry]];
+        YMKPolylineIndex *index = [YMKPolylineUtils createPolylineIndexWithPolyline:polyline];
         YMKPolylinePosition *position = [index closestPolylinePositionWithPoint:point positionFrom:positionFrom positionTo:positionTo maxLocationBias:maxLocationBias];
 
         NSMutableDictionary *map = [[NSMutableDictionary alloc] init];

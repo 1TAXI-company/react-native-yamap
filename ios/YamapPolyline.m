@@ -5,6 +5,7 @@
 #import "RNYamap.h"
 #import "View/dto/ArrowDTO.h"
 #import "View/dto/GradientDTO.h"
+#import "RouteStore.h"
 
 #import "View/YamapPolylineView.h"
 #import "View/RNYMView.h"
@@ -92,6 +93,13 @@ RCT_CUSTOM_VIEW_PROPERTY(gradientInfo, GradientDTO, YamapPolylineView) {
 
 RCT_CUSTOM_VIEW_PROPERTY(hide, NSArray<YMKSubpolyline>, YamapPolylineView) {
     [view setHideSegments:[RCTConvert HideSegments:json]];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(save, BOOL, YamapPolylineView) {
+    if ([json boolValue]) {
+        RouteStore *routeStore = [RouteStore sharedInstance];
+        [routeStore setPolyline:[view getPolyline]];
+    }
 }
 
 @end
