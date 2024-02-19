@@ -153,7 +153,7 @@ RCT_EXPORT_METHOD(getAdvancedPosition:(id)json resolver:(RCTPromiseResolveBlock)
         YMKPolylinePosition *advancedPosition = [YMKPolylineUtils advancePolylinePositionWithPolyline:[route geometry] position:position distance:[(NSNumber *)json[@"distance"] doubleValue]];
 
         NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
-        [polylineJson setValue:[self createMapFromPolyline:position] forKey:@"position"];
+        [polylineJson setValue:[self createMapFromPolyline:advancedPosition] forKey:@"position"];
 
         resolve(polylineJson);
     } else {
