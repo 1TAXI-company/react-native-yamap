@@ -144,7 +144,7 @@ export class YaMap extends React.Component<YaMapProps> {
   }
 
   //this function will get reached position from route with passed id. Will add given distance and return advanced position
-  public getAdvancedPosition(advancePositionDTO: AdvancePositionDTO): Promise<number> {
+  public getAdvancedPosition(advancePositionDTO: AdvancePositionDTO): Promise<PolylinePosition> {
     return NativeYamapModule.getAdvancedPosition(advancePositionDTO);
   }
 
