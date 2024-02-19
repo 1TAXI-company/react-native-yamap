@@ -27,6 +27,23 @@
     return nil;
 }
 
+- (YMKPolyline *)accessRoutePolylineForKey:(NSString *)key {
+    for (YMKDrivingRoute *route in self.routeDictionary) {
+        if ([[route routeId] isEqualToString:key]) {
+            return [route geometry];
+        }
+    }
+    return nil;
+}
+
+- (YMKPolyline *)getPolyline {
+    return self.polyline;
+}
+
+- (void)setPolyline:(YMKPolyline *)polyline {
+    self.polyline = polyline;
+}
+
 - (void)clear {
     if (self.routeDictionary.count > 10) {
         NSUInteger elementsToRemove = self.routeDictionary.count - 10; // Calculate the number of elements to remove from the beginning
