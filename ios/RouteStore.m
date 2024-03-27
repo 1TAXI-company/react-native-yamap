@@ -37,11 +37,13 @@
 }
 
 - (YMKPolyline *)getPolyline {
-    return self.polyline;
+    return _savedPolyline;
 }
 
 - (void)setPolyline:(YMKPolyline *)polyline {
-    self.polyline = polyline;
+    if (polyline) {
+        _savedPolyline = polyline;
+    }
 }
 
 - (void)clear {

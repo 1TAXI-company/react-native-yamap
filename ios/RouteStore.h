@@ -4,7 +4,7 @@
 @interface RouteStore : NSObject
 
 @property (nonatomic, strong) NSMutableArray *routeDictionary;
-@property (nonatomic, strong) YMKPolyline *polyline;
+@property (nonatomic, strong) YMKPolyline *savedPolyline;
 
 + (instancetype)sharedInstance;
 - (void)addElement:(YMKDrivingRoute *)route;
