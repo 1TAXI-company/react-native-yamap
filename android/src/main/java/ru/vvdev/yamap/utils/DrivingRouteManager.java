@@ -148,13 +148,17 @@ public class DrivingRouteManager {
     public void getAdvancedPosition(final String routeId, final PolylinePosition polylinePosition,
                                    final double distance,
                                    final Promise promise) {
-        final DrivingRoute drivingRoute = getRoute(routeId);
-
         final WritableMap writableMap = Arguments.createMap();
-        if (Objects.nonNull(drivingRoute)) {
+        Polyline polyline;
+        if (Objects.nonNull(routeId)) {
+            polyline = getRoutePolyline(routeId);
+        } else {
+            polyline = savedPolyline;
+        }
 
+        if (Objects.nonNull(polyline)) {
             PopulatorUtils.populatePositionJson(writableMap,
-                    PolylineUtils.advancePolylinePosition(drivingRoute.getGeometry(),
+                    PolylineUtils.advancePolylinePosition(polyline,
                             polylinePosition, distance));
             promise.resolve(writableMap);
         } else {

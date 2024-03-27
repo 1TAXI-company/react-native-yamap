@@ -112,7 +112,7 @@ export interface SetPositionDTO {
 }
 
 export interface AdvancePositionDTO {
-  routeId: string;
+  routeId?: string;
   position: Position;
   distance: number;
 }

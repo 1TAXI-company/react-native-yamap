@@ -145,12 +145,17 @@ RCT_EXPORT_METHOD(getDistance:(id)json resolver:(RCTPromiseResolveBlock) resolve
 RCT_EXPORT_METHOD(getAdvancedPosition:(id)json resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject) {
     NSString *routeId = json[@"routeId"];
 
-    YMKDrivingRoute *route = [[RouteStore sharedInstance] accessRouteForKey:routeId];
+    YMKPolyline *polyline;
+    if (routeId != nil) {
+        polyline = [[RouteStore sharedInstance] accessRoutePolylineForKey:routeId];
+    } else {
+        polyline = [[RouteStore sharedInstance] getPolyline];
+    }
 
-    if (route != nil) {
+    if (polyline != nil) {
         YMKPolylinePosition *position = [self createPolylinePosition:json[@"position"]];
 
-        YMKPolylinePosition *advancedPosition = [YMKPolylineUtils advancePolylinePositionWithPolyline:[route geometry] position:position distance:[(NSNumber *)json[@"distance"] doubleValue]];
+        YMKPolylinePosition *advancedPosition = [YMKPolylineUtils advancePolylinePositionWithPolyline:polyline position:position distance:[(NSNumber *)json[@"distance"] doubleValue]];
 
         NSMutableDictionary *polylineJson = [[NSMutableDictionary alloc] init];
         [polylineJson setValue:[self createMapFromPolyline:advancedPosition] forKey:@"position"];
