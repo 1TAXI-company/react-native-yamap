@@ -101,7 +101,7 @@ public class YamapMarker extends ReactViewGroup implements MapObjectTapListener,
     }
 
     private void updateMarker() {
-        if (mapObject != null && mapObject.isValid()) {
+        if (mapObject != null && mapObject.isValid() && point != null) {
             final IconStyle iconStyle = new IconStyle();
             iconStyle.setScale(scale);
             iconStyle.setRotationType(rotated ? RotationType.ROTATE : RotationType.NO_ROTATION);
