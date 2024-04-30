@@ -248,7 +248,9 @@
     @try  {
         YMKPlacemarkMapObject* placemark = [self getMapObject];
         double delta = angle - placemark.direction;
-        [self rotateAnimationLoop: 0 withTotalFrames:[@(duration / YAMAP_FRAMES_PER_SECOND) integerValue] withDelta:delta];
+        double delta2 = 360 + placemark.direction - angle;
+        double finalDelta = delta < delta2 ? delta : delta2 * -1;
+        [self rotateAnimationLoop: 0 withTotalFrames:[@(duration / YAMAP_FRAMES_PER_SECOND) integerValue] withDelta:finalDelta];
     } @catch (NSException *exception) {
         NSLog(@"Reason: %@ ",exception.reason);
     }

@@ -200,24 +200,26 @@ public class YamapMarker extends ReactViewGroup implements MapObjectTapListener,
     }
 
     public void animatedRotateTo(final float angle, float duration) {
-        PlacemarkMapObject placemark = (PlacemarkMapObject) this.getMapObject();
-        final float startDirection = placemark.getDirection();
-        final float delta = angle - placemark.getDirection();
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-        valueAnimator.setDuration((long) duration);
-        valueAnimator.setInterpolator(new LinearInterpolator());
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override public void onAnimationUpdate(ValueAnimator animation) {
-                try {
-                    float v = animation.getAnimatedFraction();
-                    rotateAnimationLoop(startDirection + v*delta);
-                } catch (Exception ex) {
-                    // I don't care atm..
+            PlacemarkMapObject placemark = (PlacemarkMapObject) this.getMapObject();
+            final float startDirection = placemark.getDirection();
+            final float delta = angle - placemark.getDirection();
+            final float delta2 = 360 - angle + placemark.getDirection();
+            final float finalDelta = delta < delta2 ? delta : delta2 * -1;
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+            valueAnimator.setDuration((long) duration);
+            valueAnimator.setInterpolator(new LinearInterpolator());
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override public void onAnimationUpdate(ValueAnimator animation) {
+                    try {
+                        float v = animation.getAnimatedFraction();
+                        rotateAnimationLoop(startDirection + v*finalDelta);
+                    } catch (Exception ex) {
+                        // I don't care atm..
+                    }
                 }
-            }
-        });
-        valueAnimator.start();
-    }
+            });
+            valueAnimator.start();
+        }
 
     @Override
     public boolean onMapObjectTap(@NonNull MapObject mapObject, @NonNull Point point) {
