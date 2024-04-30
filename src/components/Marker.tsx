@@ -10,7 +10,7 @@ export interface MarkerProps {
   scale?: number;
   rotated?: boolean;
   onPress?: () => void;
-  point: Point;
+  point: Point | null | undefined;
   source?: ImageSourcePropType;
   anchor?: { x: number, y: number };
   visible?: boolean;
