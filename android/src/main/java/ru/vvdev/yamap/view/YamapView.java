@@ -47,6 +47,7 @@ import com.yandex.mapkit.map.CircleMapObject;
 import com.yandex.mapkit.map.ClusterizedPlacemarkCollection;
 import com.yandex.mapkit.map.IconStyle;
 import com.yandex.mapkit.map.InputListener;
+import com.yandex.mapkit.map.MapMode;
 import com.yandex.mapkit.map.MapObject;
 import com.yandex.mapkit.map.PlacemarkMapObject;
 import com.yandex.mapkit.map.PolygonMapObject;
@@ -326,6 +327,10 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
         ReactContext reactContext = (ReactContext) getContext();
         reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "screenToWorldPoints", result);
+    }
+
+    public void setDrivingMode(boolean flag) {
+        getMap().setMode(flag ? MapMode.DRIVING : MapMode.DEFAULT);
     }
 
     public void setZoom(Float zoom, float duration, int animation) {

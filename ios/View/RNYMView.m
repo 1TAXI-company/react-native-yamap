@@ -1188,6 +1188,9 @@
     [self.mapWindow.map setNightModeEnabled:nightMode];
 }
 
+- (void)setDrivingMode:(BOOL)drivingMode {
+    [self.mapWindow.map setMode:drivingMode ? YMKMapModeDriving : YMKMapModeDefault];
+}
 
 - (void)setListenUserLocation:(BOOL) listen {
     YMKMapKit *inst = [YMKMapKit sharedInstance];

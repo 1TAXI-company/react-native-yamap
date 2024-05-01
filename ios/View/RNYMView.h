@@ -35,6 +35,7 @@
 
 // PROPS
 - (void)setNightMode:(BOOL)nightMode;
+- (void)setDrivingMode:(BOOL)drivingMode;
 - (void)setClusters:(BOOL)userClusters;
 - (void)setListenUserLocation:(BOOL)listen;
 - (void)setUserLocationIcon:(NSString *_Nullable)iconSource;

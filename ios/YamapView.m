@@ -99,6 +99,12 @@ RCT_CUSTOM_VIEW_PROPERTY(nightMode, BOOL, RNYMView) {
     }
 }
 
+RCT_CUSTOM_VIEW_PROPERTY(drivingMode, BOOL, RNYMView) {
+    if (view) {
+        [view setDrivingMode: json ? [json boolValue]: NO];
+    }
+}
+
 RCT_CUSTOM_VIEW_PROPERTY(mapStyle, NSString, RNYMView) {
 	if (json && view) {
 		[view.mapWindow.map setMapStyleWithStyle:json];
