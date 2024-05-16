@@ -165,7 +165,6 @@ public class YamapViewManager extends ViewGroupManager<YamapView> {
     @Nonnull
     @Override
     public YamapView createViewInstance(@Nonnull ThemedReactContext context) {
-        context.d
         YamapView view = new YamapView(context);
         MapKitFactory.getInstance().onStart();
         view.onStart();
