@@ -132,6 +132,10 @@ export class YaMap extends React.Component<YaMapProps> {
     return NativeYamapModule.getReachedPosition(routeId);
   }
 
+  public updatePolylinePoints(points: Point[]) {
+    NativeYamapModule.updatePolylinePoints(points);
+  }
+
   // this function will get current position, and will collect some info (details you can find in the interface)
   // from this point belongs to the route with id that you passed
   // you can check documentation https://yandex.ru/dev/mapkit/doc/ru/com/yandex/mapkit/navigation/RoutePosition

@@ -6,14 +6,17 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.geometry.PolylinePosition;
 import com.yandex.mapkit.transport.TransportFactory;
 import com.yandex.runtime.i18n.I18nManagerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -164,6 +167,17 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
                                     final Promise promise) {
         runOnUiThread(new Thread(() -> {
             routeManager.getReachedPosition(routeId, promise);
+        }));
+    }
+
+    @ReactMethod
+    private void updatePolylinePoints(final ReadableArray array) {
+        runOnUiThread(new Thread(() -> {
+            ArrayList<Point> parsed = new ArrayList<>();
+            for (int i = 0; i < array.size(); ++i) {
+                parsed.add(createPoint(array.getMap(i)));
+            }
+            DrivingRouteManager.getInstance().savePolyline(new Polyline(parsed));
         }));
     }
 

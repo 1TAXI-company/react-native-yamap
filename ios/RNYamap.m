@@ -1,6 +1,8 @@
 #import "RNYamap.h"
 @import YandexMapsMobile;
 #import "RouteStore.h"
+#import "Converter/RCTConvert+Yamap.m"
+#import <React/RCTLog.h>
 
 @implementation yamap
 
@@ -178,6 +180,16 @@ RCT_EXPORT_METHOD(setReachedPosition:(id)json resolver:(RCTPromiseResolveBlock) 
         resolve(@"success");
     } else {
         reject(@"ERROR", @"noRouteWithSuchId", nil);
+    }
+}
+
+RCT_EXPORT_METHOD(updatePolylinePoints:(id)json) {
+    RCTLogInfo(@"Cannot find NativeView with tag #%@", json);
+    NSArray<YMKPoint *> *points = [RCTConvert Points:json];
+
+    if (points != nil) {
+        YMKPolyline *polyline = [YMKPolyline polylineWithPoints:points];
+        [[RouteStore sharedInstance] setPolyline:polyline];
     }
 }
 
