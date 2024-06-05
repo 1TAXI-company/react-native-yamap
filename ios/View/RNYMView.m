@@ -59,9 +59,9 @@
 #endif
 
     _reactSubviews = [[NSMutableArray alloc] init];
-    masstransitRouter = [[YMKTransport sharedInstance] createMasstransitRouter];
-    drivingRouter = [[YMKDirections sharedInstance] createDrivingRouter];
-    pedestrianRouter = [[YMKTransport sharedInstance] createPedestrianRouter];
+    masstransitRouter = [[YMKTransportFactory instance] createMasstransitRouter];
+    drivingRouter = [[YMKDirectionsFactory instance] createDrivingRouterWithType:YMKDrivingRouterTypeOnline];
+    pedestrianRouter = [[YMKTransportFactory instance] createPedestrianRouter];
     transitOptions = [YMKTransitOptions transitOptionsWithAvoid:YMKFilterVehicleTypesNone timeOptions:[[YMKTimeOptions alloc] init]];    acceptVehicleTypes = [[NSMutableArray<NSString *> alloc] init];
     routes = [[NSMutableArray alloc] init];
     currentRouteInfo = [[NSMutableArray alloc] init];
@@ -100,7 +100,7 @@
     }
 
     NSMutableArray* points = [[NSMutableArray alloc] init];
-    YMKPolyline* subpolyline = YMKMakeSubpolyline(route.geometry, section.geometry);
+    YMKPolyline* subpolyline = [YMKSubpolylineHelper subpolylineWithPolyline:route.geometry subpolyline:section.geometry];
 
     for (int i = 0; i < [subpolyline.points count]; ++i) {
         YMKPoint* point = [subpolyline.points objectAtIndex:i];
@@ -185,7 +185,8 @@
 
     [routeMetadata setObject:wTransports forKey:@"transports"];
     NSMutableArray *points = [[NSMutableArray alloc] init];
-    YMKPolyline *subpolyline = YMKMakeSubpolyline(route.geometry, section.geometry);
+
+    YMKPolyline *subpolyline = [YMKSubpolylineHelper subpolylineWithPolyline:route.geometry subpolyline:section.geometry];
 
     for (int i = 0; i < [subpolyline.points count]; ++i) {
         YMKPoint *point = [subpolyline.points objectAtIndex:i];
@@ -200,26 +201,26 @@
     return routeMetadata;
 }
 
-- (NSString *)convertJamTypeToString:(YMKDrivingJamType)jamType {
+- (NSString *)convertJamTypeToString:(YMKJamType)jamType {
     NSString *jamTypeString = nil;
 
     switch (jamType) {
-        case YMKDrivingJamTypeUnknown:
+        case YMKJamTypeUnknown:
             jamTypeString = @"UNKNOWN";
             break;
-        case YMKDrivingJamTypeFree:
+        case YMKJamTypeFree:
             jamTypeString = @"FREE";
             break;
-        case YMKDrivingJamTypeHard:
+        case YMKJamTypeHard:
             jamTypeString = @"HARD";
             break;
-        case YMKDrivingJamTypeVeryHard:
+        case YMKJamTypeVeryHard:
             jamTypeString = @"VERY_HARD";
             break;
-        case YMKDrivingJamTypeLight:
+        case YMKJamTypeLight:
             jamTypeString = @"LIGHT";
             break;
-        case YMKDrivingJamTypeBlocked:
+        case YMKJamTypeBlocked:
             jamTypeString = @"BLOCKED";
             break;
         default:
@@ -234,7 +235,7 @@
     __weak RNYMView *weakSelf = self;
 
     if ([vehicles count] == 1 && [[vehicles objectAtIndex:0] isEqualToString:@"car"]) {
-        YMKDrivingDrivingOptions *drivingOptions = [[YMKDrivingDrivingOptions alloc] init];
+        YMKDrivingOptions *drivingOptions = [[YMKDrivingOptions alloc] init];
         YMKDrivingVehicleOptions *vehicleOptions = [[YMKDrivingVehicleOptions alloc] init];
 
         drivingSession = [drivingRouter requestRoutesWithPoints:_points drivingOptions:drivingOptions
@@ -306,19 +307,19 @@
     };
 
     if ([vehicles count] == 0) {
-        walkSession = [pedestrianRouter requestRoutesWithPoints:_points timeOptions:[[YMKTimeOptions alloc] init] routeHandler:_routeHandler];
+        walkSession = [pedestrianRouter requestRoutesWithPoints:_points timeOptions:[[YMKTimeOptions alloc] init] avoidSteep:false routeHandler:_routeHandler];
         return;
     }
 
     YMKTransitOptions *_transitOptions = [YMKTransitOptions transitOptionsWithAvoid:YMKFilterVehicleTypesNone timeOptions:[[YMKTimeOptions alloc] init]];
-    masstransitSession = [masstransitRouter requestRoutesWithPoints:_points transitOptions:_transitOptions routeHandler:_routeHandler];
+    masstransitSession = [masstransitRouter requestRoutesWithPoints:_points transitOptions:_transitOptions avoidSteep:false routeHandler:_routeHandler];
 }
 
 - (void)populateMandatoryInfo:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
     NSMutableArray *jamsArray = [[NSMutableArray alloc] init];
-    NSArray<YMKDrivingJamSegment *> *jamSegments = [route jamSegments];
-    for (YMKDrivingJamSegment *jamSegment in jamSegments) {
-        NSString *jamTypeString = [self convertJamTypeToString:jamSegment.jamType];
+    NSArray<YMKJamSegment *> *jamSegments = [route jamSegments];
+    for (YMKJamSegment *jamSegment in jamSegments) {
+        NSString *jamTypeString = [self convertJamTypeToString:[jamSegment jamType]];
         [jamsArray addObject:jamTypeString];
     }
     [jsonRoute setValue:jamsArray forKey:@"jams"];
@@ -377,7 +378,6 @@
     [self populateTollRoads:route json:jsonRoute];
     [self populateFerries:route json:jsonRoute];
     [self populateTrafficLights:route json:jsonRoute];
-    [self populateStandingSegments:route json:jsonRoute];
     [self populateAnnotationLanguage:route json:jsonRoute];
     [self populateRequestPoints:route json:jsonRoute];
     [self populateWayPoints:route json:jsonRoute];
@@ -412,10 +412,6 @@
     [metadataJson setObject:@([metadata legIndex]) forKey:@"legIndex"];
 
     [self populateAnnotation:[metadata annotation] json:metadataJson];
-
-    if ([metadata schemeId] != nil && ![[metadata schemeId] isEqual:[NSNull null]]) {
-        [metadataJson setValue:[metadata schemeId] forKey:@"schemeId"];
-    }
 
     NSMutableArray *viaPointsJson = [[NSMutableArray alloc] init];
     NSArray<NSNumber*> *points = [metadata viaPointPositions];
@@ -456,35 +452,6 @@
     if ([annotation toponymPhrase] != nil) {
         [annotationJson setValue:[[annotation toponymPhrase] text] forKey:@"toponymPhrase"];
     }
-
-    YMKDrivingHDAnnotation *hdAnnotation = [annotation hdAnnotation];
-    if (hdAnnotation != nil) {
-        NSMutableDictionary *hdAnnotationJson = [[NSMutableDictionary alloc] init];
-
-        if ([hdAnnotation actionArea] != nil) {
-            NSMutableArray *pointsJson = [[NSMutableArray alloc] init];
-            NSArray<YMKPoint*> *points = [[hdAnnotation actionArea] points];
-            for (int i = 0; i < [points count]; i++) {
-                [pointsJson addObject:[self createMapFromPoint:[points objectAtIndex:i]]];
-            }
-
-            [hdAnnotation setValue:pointsJson forKey:@"actionAreaPoint"];
-        }
-
-        if ([hdAnnotation trajectory] != nil) {
-            NSMutableArray *pointsJson = [[NSMutableArray alloc] init];
-            NSArray<YMKPoint*> *points = [[hdAnnotation trajectory] points];
-            for (int i = 0; i < [points count]; i++) {
-                [pointsJson addObject:[self createMapFromPoint:[points objectAtIndex:i]]];
-            }
-
-            [hdAnnotation setValue:pointsJson forKey:@"trajectory"];
-        }
-
-        [annotationJson setValue:hdAnnotationJson forKey:@"hdAnnotation"];
-    }
-
-    [metadataJson setValue:annotationJson forKey:@"annotation"];
 }
 
 - (void)populateRailwayCrossings:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
@@ -654,25 +621,6 @@
             [ferriesArray addObject:ferryJson];
         }
         [jsonRoute setObject:ferriesArray forKey:@"ferries"];
-    }
-}
-
-- (void)populateStandingSegments:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
-    NSArray<YMKDrivingStandingSegment *> *standingSegments = [route standingSegments];
-    if (standingSegments != nil) {
-        NSMutableArray *standingSegmentsArray = [[NSMutableArray alloc] init];
-        for (int i = 0; i < [standingSegments count]; i++) {
-            YMKSubpolyline *position = [[standingSegments objectAtIndex:i] position];
-            NSMutableDictionary *positionJson = [[NSMutableDictionary alloc] init];
-            [positionJson setValue:[self createMapFromPolyline:[position begin]] forKey:@"begin"];
-            [positionJson setValue:[self createMapFromPolyline:[position end]] forKey:@"end"];
-
-            NSMutableDictionary *standingSegmentJson = [[NSMutableDictionary alloc] init];
-            [standingSegmentJson setValue:positionJson forKey:@"position"];
-
-            [standingSegmentsArray addObject:standingSegmentJson];
-        }
-        [jsonRoute setObject:standingSegmentsArray forKey:@"standingSegments"];
     }
 }
 
@@ -1010,7 +958,7 @@
 - (void)setCenter:(YMKCameraPosition *)position withDuration:(float)duration withAnimation:(int)animation {
     if (duration > 0) {
         YMKAnimationType anim = animation == 0 ? YMKAnimationTypeSmooth : YMKAnimationTypeLinear;
-        [self.mapWindow.map moveWithCameraPosition:position animationType:[YMKAnimation animationWithType:anim duration: duration] cameraCallback:^(BOOL completed) {}];
+        [self.mapWindow.map moveWithCameraPosition:position animation:[YMKAnimation animationWithType:anim duration: duration] cameraCallback:^(BOOL completed) {}];
     } else {
         [self.mapWindow.map moveWithCameraPosition:position];
     }
@@ -1189,7 +1137,7 @@
 }
 
 - (void)setDrivingMode:(BOOL)drivingMode {
-    [self.mapWindow.map setMode:drivingMode ? YMKMapModeDriving : YMKMapModeDefault];
+    //[self.mapWindow.map setMode:drivingMode ? YMKMapModeDriving : YMKMapModeDefault];
 }
 
 - (void)setListenUserLocation:(BOOL) listen {
@@ -1248,7 +1196,7 @@
     return points;
 }
 
-- (YMKBoundingBox *)calculateBoundingBox:(NSArray<YMKPoint *> *) points {
+- (YMKGeometry *)calculateBoundingBox:(NSArray<YMKPoint *> *) points {
     double minLon = [points[0] longitude], maxLon = [points[0] longitude];
     double minLat = [points[0] latitude], maxLat = [points[0] latitude];
 
@@ -1274,7 +1222,7 @@
     }
 
     YMKBoundingBox *boundingBox = [YMKBoundingBox boundingBoxWithSouthWest:southWest northEast:northEast];
-    return boundingBox;
+    return [YMKGeometry geometryWithBoundingBox:boundingBox];
 }
 
 - (void)fitMarkers:(NSArray<YMKPoint *> *) points {
@@ -1283,9 +1231,9 @@
         [self.mapWindow.map moveWithCameraPosition:[YMKCameraPosition cameraPositionWithTarget:center zoom:15 azimuth:0 tilt:0]];
         return;
     }
-    YMKCameraPosition *cameraPosition = [self.mapWindow.map cameraPositionWithBoundingBox:[self calculateBoundingBox:points]];
+    YMKCameraPosition *cameraPosition = [self.mapWindow.map cameraPositionWithGeometry:[self calculateBoundingBox:points]];
     cameraPosition = [YMKCameraPosition cameraPositionWithTarget:cameraPosition.target zoom:cameraPosition.zoom - 0.8f azimuth:cameraPosition.azimuth tilt:cameraPosition.tilt];
-    [self.mapWindow.map moveWithCameraPosition:cameraPosition animationType:[YMKAnimation animationWithType:YMKAnimationTypeSmooth duration:1.0] cameraCallback:^(BOOL completed){}];
+    [self.mapWindow.map moveWithCameraPosition:cameraPosition animation:[YMKAnimation animationWithType:YMKAnimationTypeSmooth duration:1.0] cameraCallback:^(BOOL completed){}];
 }
 
 - (void)setLogoPosition:(NSDictionary *)logoPosition {
@@ -1441,7 +1389,7 @@
     } else if ([subview isKindOfClass:[YamapCircleView class]]) {
         YMKMapObjectCollection *objects = self.mapWindow.map.mapObjects;
         YamapCircleView *circle = (YamapCircleView*) subview;
-        YMKCircleMapObject *obj = [objects addCircleWithCircle:[circle getCircle] strokeColor:UIColor.blackColor strokeWidth:0.f fillColor:UIColor.blackColor];
+        YMKCircleMapObject *obj = [objects addCircleWithCircle:[circle getCircle]];
         [circle setMapObject:obj];
     } else {
         NSArray<id<RCTComponent>> *childSubviews = [subview reactSubviews];
@@ -1519,7 +1467,7 @@
 }
 
 - (void)setMaxFps:(float)maxFps {
-    [self.mapWindow setMaxFpsWithFps:maxFps];
+    //[self.mapWindow setMaxFpsWithFps:maxFps];
 }
 
 - (void)setInteractive:(BOOL)interactive {

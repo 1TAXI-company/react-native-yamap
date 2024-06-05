@@ -8,7 +8,6 @@ import com.yandex.mapkit.directions.driving.Annotation;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSectionMetadata;
-import com.yandex.mapkit.directions.driving.HDAnnotation;
 import com.yandex.mapkit.directions.driving.Weight;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
@@ -77,9 +76,6 @@ public class SectionPopulatorImpl implements SectionPopulator {
         populateAnnotation(sectionMetadata.getAnnotation(), metadataMap);
 
         metadataMap.putInt("legIndex", sectionMetadata.getLegIndex());
-        if (Objects.nonNull(sectionMetadata.getSchemeId())) {
-            metadataMap.putString("schemeId", sectionMetadata.getSchemeId().name());
-        }
         final WritableArray viaPoints = Arguments.createArray();
         for (Integer viaPointPosition : sectionMetadata.getViaPointPositions()) {
             viaPoints.pushInt(viaPointPosition);
@@ -117,7 +113,6 @@ public class SectionPopulatorImpl implements SectionPopulator {
         }
 
         populateActionMetadata(annotation.getActionMetadata(), annotationMap);
-        populateHDAnnotation(annotation.getHdAnnotation(), annotationMap);
 
         metadataMap.putMap("annotation", annotationMap);
     }
@@ -136,35 +131,6 @@ public class SectionPopulatorImpl implements SectionPopulator {
         }
 
         annotationMap.putMap("actionMetadata", actionMetadataMap);
-    }
-
-    private void populateHDAnnotation(final HDAnnotation hdAnnotation,
-                                      final WritableMap annotationMap) {
-        if (Objects.nonNull(hdAnnotation)) {
-            final WritableMap hdAnnotationMap = Arguments.createMap();
-
-            if (Objects.nonNull(hdAnnotation.getActionArea())) {
-                final WritableArray actionAreaMap = Arguments.createArray();
-
-                for (Point point : hdAnnotation.getActionArea().getPoints()) {
-                    actionAreaMap.pushMap(PopulatorUtils.createPointJson(point));
-                }
-
-                hdAnnotationMap.putArray("actionAreaPoint", actionAreaMap);
-            }
-
-            if (Objects.nonNull(hdAnnotation.getTrajectory())) {
-                final WritableArray trajectoryMap = Arguments.createArray();
-
-                for (Point point : hdAnnotation.getTrajectory().getPoints()) {
-                    trajectoryMap.pushMap(PopulatorUtils.createPointJson(point));
-                }
-
-                hdAnnotationMap.putArray("trajectory", trajectoryMap);
-            }
-
-            annotationMap.putMap("hdAnnotation", hdAnnotationMap);
-        }
     }
 
 }

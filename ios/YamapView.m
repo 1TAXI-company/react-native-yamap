@@ -220,9 +220,9 @@ RCT_EXPORT_METHOD(findRoutes:(nonnull NSNumber *)reactTag json:(NSDictionary *)j
         for (int i = 0; i < [points count]; ++i) {
             YMKRequestPoint *requestPoint = nil;
             if (i == 0 || i == [points count] - 1) {
-                requestPoint = [YMKRequestPoint requestPointWithPoint:[points objectAtIndex:i] type:YMKRequestPointTypeWaypoint pointContext:nil];
+                requestPoint = [YMKRequestPoint requestPointWithPoint:[points objectAtIndex:i] type:YMKRequestPointTypeWaypoint pointContext:nil drivingArrivalPointId:nil];
             } else {
-                requestPoint = [YMKRequestPoint requestPointWithPoint:[points objectAtIndex:i] type:YMKRequestPointTypeViapoint pointContext:nil];
+                requestPoint = [YMKRequestPoint requestPointWithPoint:[points objectAtIndex:i] type:YMKRequestPointTypeViapoint pointContext:nil drivingArrivalPointId:nil];
             }
             [requestPoints addObject:requestPoint];
         }

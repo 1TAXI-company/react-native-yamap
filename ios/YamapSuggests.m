@@ -19,7 +19,7 @@
     YMKPoint* northEastPoint = [YMKPoint pointWithLatitude:90.0 longitude:180.0];
     defaultBoundingBox = [YMKBoundingBox boundingBoxWithSouthWest:southWestPoint northEast:northEastPoint];
     suggestOptions = [YMKSuggestOptions suggestOptionsWithSuggestTypes: YMKSuggestTypeUnspecified userPosition:nil suggestWords:true];
-    searchOptions = [YMKSearchOptions searchOptionsWithSearchTypes:YMKSearchTypeGeo resultPageSize:nil userPosition:nil origin:nil geometry:true disableSpellingCorrection:true filters:nil];
+    searchOptions = [YMKSearchOptions searchOptionsWithSearchTypes:YMKSearchTypeGeo resultPageSize:nil snippets:YMKSearchSnippetNone userPosition:nil origin:nil geometry:true disableSpellingCorrection:true filters:nil];
 
     return self;
 }
@@ -48,8 +48,9 @@ NSString* YandexSuggestErrorDomain = @"YandexSuggestErrorDomain";
     }
 
     if (!searchManager) {
+
         runOnMainQueueWithoutDeadlocking(^{
-            self->searchManager = [[YMKSearch sharedInstance] createSearchManagerWithSearchManagerType:YMKSearchSearchManagerTypeOnline];
+            self->searchManager = [[YMKSearchFactory instance] createSearchManagerWithSearchManagerType:YMKSearchManagerTypeOnline];
         });
     }
 
@@ -69,11 +70,13 @@ NSString* YandexSuggestErrorDomain = @"YandexSuggestErrorDomain";
             [session suggestWithText:searchQuery
                                                 window:boundingBox
                                 suggestOptions:options
-                             responseHandler:^(NSArray<YMKSuggestItem *> * _Nullable suggestList, NSError * _Nullable error) {
+                             responseHandler:^(YMKSuggestResponse * _Nullable suggest, NSError * _Nullable error) {
                 if (error) {
                     reject(ERR_SUGGEST_FAILED, [NSString stringWithFormat:@"search request: %@", searchQuery], error);
                     return;
                 }
+
+                NSArray<YMKSuggestItem *> *suggestList = [suggest items];
 
                 NSMutableArray *suggestsToPass = [NSMutableArray new];
 
@@ -142,7 +145,7 @@ RCT_EXPORT_METHOD(suggest:(nonnull NSString*) searchQuery resolver:(RCTPromiseRe
 RCT_EXPORT_METHOD(geocode:(NSDictionary *)geocodeOptions resolver:(RCTPromiseResolveBlock) resolve rejecter:(RCTPromiseRejectBlock) reject {
     if (!searchManager) {
         runOnMainQueueWithoutDeadlocking(^{
-            self->searchManager = [[YMKSearch sharedInstance] createSearchManagerWithSearchManagerType:YMKSearchSearchManagerTypeOnline];
+            self->searchManager = [[YMKSearchFactory instance] createSearchManagerWithSearchManagerType:YMKSearchManagerTypeOnline];
         });
     }
 

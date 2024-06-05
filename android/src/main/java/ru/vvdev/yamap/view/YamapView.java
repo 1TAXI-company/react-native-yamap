@@ -28,11 +28,13 @@ import com.yandex.mapkit.directions.driving.ConditionsListener;
 import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
+import com.yandex.mapkit.directions.driving.DrivingRouterType;
 import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSession;
 import com.yandex.mapkit.directions.driving.Event;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
+import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.geometry.Subpolyline;
@@ -47,7 +49,6 @@ import com.yandex.mapkit.map.CircleMapObject;
 import com.yandex.mapkit.map.ClusterizedPlacemarkCollection;
 import com.yandex.mapkit.map.IconStyle;
 import com.yandex.mapkit.map.InputListener;
-import com.yandex.mapkit.map.MapMode;
 import com.yandex.mapkit.map.MapObject;
 import com.yandex.mapkit.map.PlacemarkMapObject;
 import com.yandex.mapkit.map.PolygonMapObject;
@@ -147,6 +148,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                 @Override
                 public void invoke(Bitmap bitmap) {
                     try {
+
                         if (mapObject != null) {
                             ImageProvider icon = ImageProvider.fromBitmap(bitmap);
                             icons.put(iconSource, icon);
@@ -169,8 +171,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     public YamapView(Context context) {
         super(context);
         reactContext = (ReactContext) getContext();
-        DirectionsFactory.initialize(context);
-        drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
+        drivingRouter = DirectionsFactory.getInstance().createDrivingRouter(DrivingRouterType.ONLINE);
         getMap().addCameraListener(this);
         getMap().addInputListener(this);
         getMap().setMapLoadedListener(this);
@@ -286,7 +287,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     public void emitVisibleRegionToJS(String id) {
-        VisibleRegion visibleRegion = getMap().getVisibleRegion();
+        VisibleRegion visibleRegion = getMapWindow().getMap().getVisibleRegion();
         WritableMap result = visibleRegionToJSON(visibleRegion);
         result.putString("id", id);
         ReactContext reactContext = (ReactContext) getContext();
@@ -329,8 +330,8 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "screenToWorldPoints", result);
     }
 
+    @Deprecated
     public void setDrivingMode(boolean flag) {
-        getMap().setMode(flag ? MapMode.DRIVING : MapMode.DEFAULT);
     }
 
     public void setZoom(Float zoom, float duration, int animation) {
@@ -349,7 +350,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
                 Point point = points.get(i);
                 final RequestPointType requestPointType = i == 0 || i == points.size() - 1 ?
                         RequestPointType.WAYPOINT : RequestPointType.VIAPOINT;
-                RequestPoint _p = new RequestPoint(point, requestPointType, null);
+                RequestPoint _p = new RequestPoint(point, requestPointType, null, null);
                 _points.add(_p);
             }
             drivingRouter.requestRoutes(_points, new DrivingOptions(), new VehicleOptions(), drivingRouteListener);
@@ -358,7 +359,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         ArrayList<RequestPoint> _points = new ArrayList<>();
         for (int i = 0; i < points.size(); ++i) {
             Point point = points.get(i);
-            _points.add(new RequestPoint(point, RequestPointType.WAYPOINT, null));
+            _points.add(new RequestPoint(point, RequestPointType.WAYPOINT, null, null));
         }
         Session.RouteListener listener = new Session.RouteListener() {
             @Override
@@ -388,11 +389,11 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             }
         };
         if (vehicles.size() == 0) {
-            pedestrianRouter.requestRoutes(_points, new TimeOptions(), listener);
+            pedestrianRouter.requestRoutes(_points, new TimeOptions(), false, listener);
             return;
         }
         TransitOptions transitOptions = new TransitOptions(FilterVehicleTypes.NONE.value, new TimeOptions());
-        masstransitRouter.requestRoutes(_points, transitOptions, listener);
+        masstransitRouter.requestRoutes(_points, transitOptions, false, listener);
     }
 
     private String getRouteId(final DrivingRoute drivingRoute) {
@@ -477,7 +478,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         return points;
     }
 
-    BoundingBox calculateBoundingBox(ArrayList<Point> points) {
+    Geometry calculateBoundingBox(ArrayList<Point> points) {
         double minLon = points.get(0).getLongitude();
         double maxLon = points.get(0).getLongitude();
         double minLat = points.get(0).getLatitude();
@@ -516,7 +517,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         }
 
         BoundingBox boundingBox = new BoundingBox(southWest, northEast);
-        return boundingBox;
+        return Geometry.fromBoundingBox(boundingBox);
     }
 
     public void fitMarkers(ArrayList<Point> points) {
@@ -653,9 +654,8 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         getMap().getLogo().setPadding(new Padding(horizontalPadding, verticalPadding));
     }
 
+    @Deprecated
     public void setMaxFps(float fps) {
-        maxFps = fps;
-        getMapWindow().setMaxFps(maxFps);
     }
 
     public void setInteractive(boolean interactive) {
@@ -850,19 +850,19 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     public void addFeature(View child, int index) {
         if (child instanceof YamapPolygon) {
             YamapPolygon _child = (YamapPolygon) child;
-            PolygonMapObject obj = getMap().getMapObjects().addPolygon(_child.polygon);
+            PolygonMapObject obj = getMapWindow().getMap().getMapObjects().addPolygon(_child.polygon);
             _child.setMapObject(obj);
         } else if (child instanceof YamapPolyline) {
             YamapPolyline _child = (YamapPolyline) child;
-            PolylineMapObject obj = getMap().getMapObjects().addPolyline(_child.polyline);
+            PolylineMapObject obj = getMapWindow().getMap().getMapObjects().addPolyline(_child.polyline);
             _child.setMapObject(obj);
         } else if (child instanceof YamapMarker) {
             YamapMarker _child = (YamapMarker) child;
-            PlacemarkMapObject obj = getMap().getMapObjects().addPlacemark(_child.point);
+            PlacemarkMapObject obj = getMapWindow().getMap().getMapObjects().addPlacemark(_child.point);
             _child.setMapObject(obj);
         } else if (child instanceof YamapCircle) {
             YamapCircle _child = (YamapCircle) child;
-            CircleMapObject obj = getMap().getMapObjects().addCircle(_child.circle, 0, 0.f, 0);
+            CircleMapObject obj = getMapWindow().getMap().getMapObjects().addCircle(_child.circle);
             _child.setMapObject(obj);
         }
     }

@@ -27,6 +27,7 @@ import com.yandex.mapkit.search.SearchType;
 import com.yandex.mapkit.search.Session;
 import com.yandex.mapkit.search.SuggestItem;
 import com.yandex.mapkit.search.SuggestOptions;
+import com.yandex.mapkit.search.SuggestResponse;
 import com.yandex.mapkit.search.SuggestSession;
 import com.yandex.mapkit.search.SuggestType;
 import com.yandex.runtime.Error;
@@ -34,6 +35,8 @@ import com.yandex.runtime.Error;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import javax.annotation.Nonnull;
 
 import ru.vvdev.yamap.utils.Callback;
 
@@ -56,7 +59,6 @@ public class YandexMapSuggestClient implements MapSuggestClient {
     private BoundingBox defaultGeometry = new BoundingBox(new Point(-90.0, -180.0), new Point(90.0, 180.0));
 
     public YandexMapSuggestClient(Context context) {
-        SearchFactory.initialize(context);
         searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
         suggestOptions.setSuggestTypes(SearchType.GEO.value);
         searchOptions = new SearchOptions();
@@ -76,7 +78,8 @@ public class YandexMapSuggestClient implements MapSuggestClient {
                 options,
                 new SuggestSession.SuggestListener() {
                     @Override
-                    public void onResponse(@NonNull List<SuggestItem> list) {
+                    public void onResponse(@Nonnull SuggestResponse suggestResponse) {
+                        List<SuggestItem> list = suggestResponse.getItems();
                         List<MapSuggestItem> result = new ArrayList<>(list.size());
                         for (int i = 0; i < list.size(); i++) {
                             SuggestItem rawSuggest = list.get(i);

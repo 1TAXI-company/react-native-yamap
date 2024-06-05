@@ -10,10 +10,9 @@ import com.yandex.mapkit.directions.driving.AnnotationSchemeID;
 import com.yandex.mapkit.directions.driving.Checkpoint;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.Ferry;
-import com.yandex.mapkit.directions.driving.JamSegment;
+import com.yandex.mapkit.navigation.JamSegment;
 import com.yandex.mapkit.directions.driving.RuggedRoad;
 import com.yandex.mapkit.directions.driving.SpeedBump;
-import com.yandex.mapkit.directions.driving.StandingSegment;
 import com.yandex.mapkit.directions.driving.TollRoad;
 import com.yandex.mapkit.directions.driving.TrafficLight;
 import com.yandex.mapkit.geometry.Point;
@@ -72,9 +71,7 @@ public class DrivingRoutePopulatorImpl implements DrivingRoutePopulator {
         populateTollRoads(jsonRoute, drivingRoute.getTollRoads());
         populateFerries(jsonRoute, drivingRoute.getFerries());
         populateTrafficLights(jsonRoute, drivingRoute.getTrafficLights());
-        populateStandingSegments(jsonRoute, drivingRoute.getStandingSegments());
         populateAnnotationLanguage(jsonRoute, drivingRoute.getAnnotationLanguage());
-        populateAnnotationScheme(jsonRoute, drivingRoute.getAnnotationSchemes());
         populateRequestPoints(jsonRoute, drivingRoute.getRequestPoints());
         populateWayPoints(jsonRoute, drivingRoute.getWayPoints());
         laneSignsPopulator.populateLaneSigns(jsonRoute, drivingRoute.getLaneSigns());
@@ -193,20 +190,6 @@ public class DrivingRoutePopulatorImpl implements DrivingRoutePopulator {
                 trafficLightsJson.pushMap(writableMap);
             }
             jsonRoute.putArray("trafficLights", trafficLightsJson);
-        }
-    }
-
-    private void populateStandingSegments(final WritableMap jsonRoute,
-                                          final List<StandingSegment> standingSegments) {
-        if (!CollectionUtils.isEmpty(standingSegments)) {
-            final WritableArray standingSegmentsJson = Arguments.createArray();
-            for (StandingSegment standingSegment : standingSegments) {
-                final WritableMap writableMap = Arguments.createMap();
-                PopulatorUtils.populateSubPolylinePositionJson(writableMap,
-                        standingSegment.getPosition());
-                standingSegmentsJson.pushMap(writableMap);
-            }
-            jsonRoute.putArray("standingSegments", standingSegmentsJson);
         }
     }
 

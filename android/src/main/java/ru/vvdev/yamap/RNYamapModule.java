@@ -27,8 +27,6 @@ import static com.facebook.react.bridge.UiThreadUtil.runOnUiThread;
 
 import android.view.View;
 
-import androidx.annotation.NonNull;
-
 import ru.vvdev.yamap.utils.DrivingRouteManager;
 import ru.vvdev.yamap.view.YamapView;
 
@@ -77,7 +75,6 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
                     }
 
                     MapKitFactory.initialize(reactContext);
-                    TransportFactory.initialize(reactContext);
                     MapKitFactory.getInstance().onStart();
                     promise.resolve(null);
                 } catch (Exception exception) {
@@ -135,7 +132,7 @@ public class RNYamapModule extends ReactContextBaseJavaModule {
                     createPolylinePosition(position1Map) : null;
             final PolylinePosition position2 = createPolylinePosition(map.getMap("position2"));
 
-            final float distance = routeManager.getDistance(routeId, position1, position2);
+            final double distance = routeManager.getDistance(routeId, position1, position2);
 
             if (distance != ERROR_DISTANCE) {
                 promise.resolve(distance);

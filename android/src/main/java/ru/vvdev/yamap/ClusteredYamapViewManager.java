@@ -16,6 +16,7 @@ import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.map.CameraPosition;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -87,62 +88,62 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
     @Override
     public void receiveCommand(
             @NonNull ClusteredYamapView view,
-            String commandType,
+            int commandType,
             @Nullable ReadableArray args) {
         Assertions.assertNotNull(view);
         Assertions.assertNotNull(args);
 
         switch (commandType) {
-            case "setCenter":
+            case SET_CENTER:
                 setCenter(castToYaMapView(view), args.getMap(0), (float) args.getDouble(1), (float) args.getDouble(2), (float) args.getDouble(3), (float) args.getDouble(4), args.getInt(5));
                 break;
 
-            case "fitAllMarkers":
+            case FIT_ALL_MARKERS:
                 fitAllMarkers(view);
                 break;
 
-            case "fitMarkers":
+            case FIT_MARKERS:
                 if (args != null) {
                     fitMarkers(view, args.getArray(0));
                 }
                 break;
 
-            case "findRoutes":
+            case FIND_ROUTES:
                 if (args != null) {
                     findRoutes(view, args.getArray(0), args.getArray(1), args.getString(2), args.getBoolean(3));
                 }
                 break;
 
-            case "setZoom":
+            case SET_ZOOM:
                 if (args != null) {
                     view.setZoom((float)args.getDouble(0), (float)args.getDouble(1), args.getInt(2));
                 }
                 break;
 
-            case "getCameraPosition":
+            case GET_CAMERA_POSITION:
                 if (args != null) {
                     view.emitCameraPositionToJS(args.getString(0));
                 }
                 break;
 
-            case "getVisibleRegion":
+            case GET_VISIBLE_REGION:
                 if (args != null) {
                     view.emitVisibleRegionToJS(args.getString(0));
                 }
                 break;
-            case "setTrafficVisible":
+            case SET_TRAFFIC_VISIBLE:
                 if (args != null) {
                     view.setTrafficVisible(args.getBoolean(0));
                 }
                 break;
 
-            case "getScreenPoints":
+            case GET_SCREEN_POINTS:
                 if (args != null) {
                     view.emitWorldToScreenPoints(args.getArray(0), args.getString(1));
                 }
                 break;
 
-            case "getWorldPoints":
+            case GET_WORLD_POINTS:
                 if (args != null) {
                     view.emitScreenToWorldPoints(args.getArray(0), args.getString(1));
                 }
@@ -158,7 +159,22 @@ public class ClusteredYamapViewManager extends ViewGroupManager<ClusteredYamapVi
 
     @ReactProp(name = "clusteredMarkers")
     public void setClusteredMarkers(View view, ReadableArray points) {
-        castToYaMapView(view).setClusteredMarkers(points.toArrayList());
+        castToYaMapView(view).setClusteredMarkers(convertToArrayList(points));
+    }
+
+    private ArrayList<Object> convertToArrayList(final ReadableArray readableArray)
+    {
+        final ArrayList<Object> arrayList = new ArrayList<>();
+
+        if (Objects.isNull(readableArray)) {
+            return arrayList;
+        }
+
+        for (int i = 0; i <readableArray.size() ; i++) {
+            arrayList.add(readableArray.getMap(i));
+        }
+
+        return arrayList;
     }
 
     @ReactProp(name = "clusterColor")

@@ -69,7 +69,7 @@ public class DrivingRouteManager {
         return instance;
     }
 
-    public float getDistance(final String routeId, final PolylinePosition position1,
+    public double getDistance(final String routeId, final PolylinePosition position1,
                              final PolylinePosition position2) {
         final DrivingRoute route = getRoute(routeId);
 
