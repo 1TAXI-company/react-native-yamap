@@ -452,6 +452,7 @@
     if ([annotation toponymPhrase] != nil) {
         [annotationJson setValue:[[annotation toponymPhrase] text] forKey:@"toponymPhrase"];
     }
+    [metadataJson setValue:annotationJson forKey:@"annotation"];
 }
 
 - (void)populateRailwayCrossings:(YMKDrivingRoute*)route json:(NSMutableDictionary*)jsonRoute {
